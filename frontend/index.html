@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered career assistant — Review resumes, practice interviews, find matching jobs, and generate digital footprints.">
+    <title>AI Career Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ── Animated Background ─────────────────────────────── -->
+    <div class="bg-grid"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="glow glow-3"></div>
+
+    <!-- ── Header ──────────────────────────────────────────── -->
+    <header class="header">
+        <div class="logo">
+            <svg class="logo-icon" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="url(#g1)" stroke-width="3"/><path d="M14 20l4 4 8-8" stroke="url(#g1)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g1" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs></svg>
+            <span>AI Career Assistant</span>
+        </div>
+        <nav class="nav" id="mainNav">
+            <button class="nav-btn active" data-tab="review" id="nav-review">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Resume Review
+            </button>
+            <button class="nav-btn" data-tab="interview" id="nav-interview">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                AI Interview
+            </button>
+            <button class="nav-btn" data-tab="jobs" id="nav-jobs">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                Job Matcher
+            </button>
+            <button class="nav-btn" data-tab="footprint" id="nav-footprint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Footprint
+            </button>
+        </nav>
+    </header>
+
+    <!-- ── Main Content ────────────────────────────────────── -->
+    <main class="main">
+
+        <!-- RESUME REVIEW TAB -->
+        <section class="tab-content active" id="tab-review">
+            <div class="hero-card">
+                <h1>AI Resume Reviewer</h1>
+                <p>Upload your resume for an instant NLP-powered analysis with actionable feedback</p>
+            </div>
+            <div class="card upload-card">
+                <div class="upload-zone" id="uploadZone">
+                    <svg class="upload-icon" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="30" stroke="url(#ug)" stroke-width="2" stroke-dasharray="6 4"/><path d="M32 20v20M24 28l8-8 8 8" stroke="url(#ug)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="ug" x1="0" y1="0" x2="64" y2="64"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs></svg>
+                    <p>Drop your resume here or <span class="upload-link">browse files</span></p>
+                    <span class="upload-hint">PDF, DOCX, or TXT (max 5 MB)</span>
+                    <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" hidden>
+                </div>
+                <div class="or-divider"><span>or paste text</span></div>
+                <textarea id="resumeText" class="textarea" placeholder="Paste your resume text here..." rows="6"></textarea>
+                <textarea id="jobDesc" class="textarea textarea-sm" placeholder="(Optional) Paste the target job description for keyword analysis..." rows="3"></textarea>
+                <button class="btn btn-primary" id="reviewBtn" onclick="submitReview()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    Analyze Resume
+                </button>
+            </div>
+            <div class="results-area" id="reviewResults" style="display:none"></div>
+        </section>
+
+        <!-- AI INTERVIEW TAB -->
+        <section class="tab-content" id="tab-interview">
+            <div class="hero-card">
+                <h1>AI Interviewer</h1>
+                <p>Practice real-time voice interviews powered by LiveKit + Groq</p>
+            </div>
+            <div class="card">
+                <div class="form-group">
+                    <label for="interviewRole">Job Role</label>
+                    <input type="text" id="interviewRole" class="input" placeholder="e.g. Senior Python Developer" value="Software Engineer">
+                </div>
+                <div class="form-group">
+                    <label for="interviewDifficulty">Difficulty</label>
+                    <select id="interviewDifficulty" class="input">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="startInterviewBtn" onclick="startInterview()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                    Start Interview
+                </button>
+                <div id="interviewStatus" class="status-box" style="display:none"></div>
+            </div>
+        </section>
+
+        <!-- JOB MATCHER TAB -->
+        <section class="tab-content" id="tab-jobs">
+            <div class="hero-card">
+                <h1>Job Matcher</h1>
+                <p>Find the best-matching jobs for your resume using semantic embeddings + Adzuna</p>
+            </div>
+            <div class="card">
+                <textarea id="jobResumeText" class="textarea" placeholder="Paste your resume text here..." rows="6"></textarea>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="jobHint">Job Title Hint (optional)</label>
+                        <input type="text" id="jobHint" class="input" placeholder="e.g. Data Scientist">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="jobLocation">Location (optional)</label>
+                        <input type="text" id="jobLocation" class="input" placeholder="e.g. New York">
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="matchBtn" onclick="matchJobs()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    Find Matching Jobs
+                </button>
+            </div>
+            <div class="results-area" id="jobResults" style="display:none"></div>
+        </section>
+
+        <!-- DIGITAL FOOTPRINT TAB -->
+        <section class="tab-content" id="tab-footprint">
+            <div class="hero-card">
+                <h1>Digital Footprint</h1>
+                <p>Generate a comprehensive summary from your GitHub & LinkedIn profiles</p>
+            </div>
+            <div class="card">
+                <div class="form-group">
+                    <label for="githubUser">GitHub Username</label>
+                    <input type="text" id="githubUser" class="input" placeholder="e.g. octocat">
+                </div>
+                <div class="form-group">
+                    <label for="linkedinUrl">LinkedIn Profile URL</label>
+                    <input type="text" id="linkedinUrl" class="input" placeholder="https://linkedin.com/in/username">
+                </div>
+                <button class="btn btn-primary" id="footprintBtn" onclick="generateFootprint()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Generate Footprint
+                </button>
+            </div>
+            <div class="results-area" id="footprintResults" style="display:none"></div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 AI Career Assistant &mdash; Powered by spaCy, LiveKit, Groq & Deepgram</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

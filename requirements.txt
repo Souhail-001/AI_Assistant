@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+requests
+pandas
+pypdf
+spacy
+sentence-transformers
+scikit-learn
