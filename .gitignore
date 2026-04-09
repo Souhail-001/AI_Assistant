@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 .env
 *.egg-info/
+app/data/chroma_db/

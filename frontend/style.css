@@ -594,6 +594,182 @@ select.input {
     color: var(--text-secondary);
 }
 
+/* ── Review Panels ─────────────────────────────────────── */
+.review-report {
+    display: grid;
+    gap: 20px;
+}
+
+.review-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.review-panel h3 {
+    margin-bottom: 12px;
+}
+
+.review-score-card {
+    border-color: var(--border-glow);
+}
+
+.review-head-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.review-verdict {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.review-verdict-strong {
+    color: var(--success);
+    border-color: rgba(76, 175, 80, 0.35);
+    background: rgba(76, 175, 80, 0.12);
+}
+
+.review-verdict-borderline {
+    color: var(--warning);
+    border-color: rgba(255, 152, 0, 0.35);
+    background: rgba(255, 152, 0, 0.12);
+}
+
+.review-verdict-weak,
+.review-verdict-reject {
+    color: var(--error);
+    border-color: rgba(244, 67, 54, 0.35);
+    background: rgba(244, 67, 54, 0.1);
+}
+
+.review-list {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+}
+
+.review-item {
+    position: relative;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    line-height: 1.55;
+    transition: var(--transition);
+}
+
+.review-item:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-1px);
+}
+
+.review-item p {
+    color: var(--text-primary);
+}
+
+.review-item-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.review-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--border-subtle);
+}
+
+.review-badge-positive {
+    background: rgba(76, 175, 80, 0.12);
+    border-color: rgba(76, 175, 80, 0.3);
+    color: var(--success);
+}
+
+.review-badge-dealbreaker {
+    background: rgba(244, 67, 54, 0.16);
+    border-color: rgba(244, 67, 54, 0.35);
+    color: var(--error);
+}
+
+.review-badge-major {
+    background: rgba(255, 152, 0, 0.16);
+    border-color: rgba(255, 152, 0, 0.32);
+    color: var(--warning);
+}
+
+.review-badge-minor {
+    background: rgba(0, 212, 255, 0.14);
+    border-color: rgba(0, 212, 255, 0.32);
+    color: var(--accent-2);
+}
+
+.review-badge-impact-high {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.24);
+    color: var(--error);
+}
+
+.review-badge-impact-medium {
+    background: rgba(255, 152, 0, 0.1);
+    border-color: rgba(255, 152, 0, 0.24);
+    color: var(--warning);
+}
+
+.review-badge-impact-low {
+    background: rgba(108, 99, 255, 0.14);
+    border-color: rgba(108, 99, 255, 0.28);
+    color: var(--accent-1);
+}
+
+.review-panel-outlook {
+    border-color: rgba(0, 212, 255, 0.22);
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.07) 0%, rgba(108, 99, 255, 0.05) 100%);
+}
+
+.review-outlook-text {
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.review-list .empty-item {
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+.review-list .empty-item p {
+    color: var(--text-muted);
+}
+
+.review-raw-text {
+    white-space: normal;
+    line-height: 1.7;
+    color: var(--text-primary);
+}
+
+@media (max-width: 640px) {
+    .review-head-meta {
+        flex-wrap: wrap;
+    }
+}
+
 /* ── Job Cards ──────────────────────────────────────────── */
 .job-card {
     display: flex;

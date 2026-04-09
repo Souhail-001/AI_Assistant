@@ -13,13 +13,21 @@ class Settings(BaseSettings):
     APP_NAME: str = "AI Career Assistant"
     DEBUG: bool = False
 
-    # Adzuna API
-    ADZUNA_APP_ID: str = Field(default="cd917cf7")
-    ADZUNA_APP_KEY: str = Field(default="a21530797f7814dd0000e514f93d98a2")
+    # SerpApi API
+    SERPAPI_KEY: str = Field(default="f857442d2559c379e9c411d42c84905de80f3fc1b1bd3f608021366f4af878e6")
+    
+    
+
+    # Google API for Generative AI
+    GOOGLE_API_KEY: str = Field(default="")
+
+    # XAI API
+    XAI_API_KEY: str = Field(default="")
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
 
 @lru_cache()

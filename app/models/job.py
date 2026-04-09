@@ -23,9 +23,9 @@ class JobMatchRequest(BaseModel):
         description="Preferred job location.",
     )
     country: str = Field(
-        "fr",
-        examples=["fr", "gb", "de", "us"],
-        description="ISO-3166-1 alpha-2 country code for Adzuna search.",
+        "tn",
+        examples=["tn", "fr", "us"],
+        description="ISO-3166-1 alpha-2 country code for SerpApi search.",
     )
     max_results: int = Field(
         10,

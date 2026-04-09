@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from app.models.job import JobMatchRequest, JobMatchResponse, JobMatch
 from app.services.job_matcher.embedder import extract_keywords, rank_jobs
-from app.services.job_matcher.adzuna_client import search_jobs
+from app.services.job_matcher.serpapi_client import search_jobs
 
 router = APIRouter()
 
@@ -11,11 +11,11 @@ router = APIRouter()
 @router.post("/match", response_model=JobMatchResponse)
 async def match_jobs(request: JobMatchRequest):
     """
-    Match a resume against live job listings from Adzuna.
+    Match a resume against live job listings from Google Jobs via SerpApi.
 
     Pipeline:
       1. Extract keywords from resume via spaCy
-      2. Search Adzuna for relevant jobs
+      2. Search Google Jobs for relevant jobs
       3. Rank results by cosine similarity (spaCy embeddings)
     """
     # ── Step 1: Extract keywords ────────────────────────────
@@ -30,8 +30,8 @@ async def match_jobs(request: JobMatchRequest):
     raw_jobs = await search_jobs(
         keywords=keywords[:5],  # top 5 keywords as query
         location=request.location,
-        country=request.country,
-        results_per_page=request.max_results,
+
+        max_results=request.max_results,
     )
 
     if not raw_jobs:

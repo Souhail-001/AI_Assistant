@@ -53,13 +53,22 @@ def generate_footprint_summary(
         langs = github_data.get("top_languages", [])
         combined_skills.update(l.lower() for l in langs)
 
-        parts.append(
+        github_summary = (
             f"GitHub: {github_data.get('public_repos', 0)} repos, "
             f"{github_data.get('total_stars', 0)} stars, "
             f"{github_data.get('followers', 0)} followers."
         )
+        if github_data.get('bio'):
+            github_summary += f" Bio: {github_data['bio']}."
+        parts.append(github_summary)
+
         if langs:
             parts.append(f"Top languages: {', '.join(langs[:5])}.")
+
+        top_repos = github_data.get('top_repos', [])
+        if top_repos:
+            repo_details = [f"{r['name']} ({r['stars']} stars)" for r in top_repos[:3]]
+            parts.append(f"Top repositories: {', '.join(repo_details)}.")
 
         # strength bump from GitHub
         strength += min(30, github_data.get("public_repos", 0) * 1.5)

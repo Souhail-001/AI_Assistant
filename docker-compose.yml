@@ -9,4 +9,6 @@ services:
       - .:/app
     environment:
       - APP_NAME=AI Career Assistant Platform
+    env_file:
+      - .env
     restart: unless-stopped
