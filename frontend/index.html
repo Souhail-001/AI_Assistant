@@ -45,6 +45,50 @@
     <!-- ── Main Content ────────────────────────────────────── -->
     <main class="main">
 
+        <!-- AUTH SECTION -->
+        <section class="auth-section" id="auth-section">
+            <div class="card auth-card">
+                <h2>Account Access</h2>
+                <p>Create an account or log in to use authenticated features.</p>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="registerEmail">Register Email</label>
+                        <input type="email" id="registerEmail" class="input" placeholder="name@example.com">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="registerPassword">Register Password</label>
+                        <input type="password" id="registerPassword" class="input" placeholder="At least 8 characters">
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="registerBtn" onclick="submitRegister()">Register</button>
+
+                <div class="form-row" style="margin-top: 16px;">
+                    <div class="form-group flex-1">
+                        <label for="loginEmail">Login Email</label>
+                        <input type="email" id="loginEmail" class="input" placeholder="name@example.com">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="loginPassword">Login Password</label>
+                        <input type="password" id="loginPassword" class="input" placeholder="Your password">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <button class="btn btn-primary" id="loginBtn" onclick="submitLogin()">Login</button>
+                    <button class="btn btn-primary" id="logoutBtn" onclick="submitLogout()">Logout</button>
+                </div>
+
+                <div id="authStatus" class="status-box" style="display:none; margin-top: 12px;"></div>
+            </div>
+        </section>
+
+        <section class="auth-gate-banner" id="authGateBanner" aria-live="polite">
+            <div class="status-box">
+                🔒 Please register or log in to access AI Resume Reviewer, AI Interview, Job Matcher, and Footprint.
+            </div>
+        </section>
+
         <!-- RESUME REVIEW TAB -->
         <section class="tab-content active" id="tab-review">
             <div class="hero-card">
@@ -73,9 +117,11 @@
         <section class="tab-content" id="tab-interview">
             <div class="hero-card">
                 <h1>AI Interviewer</h1>
-                <p>Practice real-time voice interviews powered by LiveKit + Groq</p>
+                <p>Practice real-time voice interviews powered by Groq AI &amp; Deepgram</p>
             </div>
-            <div class="card">
+
+            <!-- Setup Card (shown before interview starts) -->
+            <div class="card" id="interviewSetup">
                 <div class="form-group">
                     <label for="interviewRole">Job Role</label>
                     <input type="text" id="interviewRole" class="input" placeholder="e.g. Senior Python Developer" value="Software Engineer">
@@ -94,6 +140,68 @@
                 </button>
                 <div id="interviewStatus" class="status-box" style="display:none"></div>
             </div>
+
+            <!-- Interview Active Area (hidden until started) -->
+            <div id="interviewActive" style="display:none">
+                <!-- Progress Bar -->
+                <div class="card interview-progress-card">
+                    <div class="interview-progress-header">
+                        <span id="interviewProgressLabel">Question 1 / 6</span>
+                        <span class="interview-role-badge" id="interviewRoleBadge">Software Engineer · Medium</span>
+                    </div>
+                    <div class="interview-progress-bar">
+                        <div class="interview-progress-fill" id="interviewProgressFill" style="width:16.6%"></div>
+                    </div>
+                </div>
+
+                <!-- Conversation Transcript -->
+                <div class="card interview-conversation-card">
+                    <h3>💬 Interview Conversation</h3>
+                    <div class="interview-transcript" id="interviewTranscript"></div>
+                </div>
+
+                <!-- Answer Input Area -->
+                <div class="card interview-input-card" id="interviewInputCard">
+                    <div class="interview-input-mode-toggle">
+                        <button class="mode-btn active" id="modeVoiceBtn" onclick="setInterviewMode('voice')">🎙️ Voice</button>
+                        <button class="mode-btn" id="modeTextBtn" onclick="setInterviewMode('text')">⌨️ Text</button>
+                    </div>
+
+                    <!-- Voice mode -->
+                    <div class="interview-voice-area" id="voiceArea">
+                        <button class="record-btn" id="recordBtn" onclick="toggleRecording()">
+                            <div class="record-btn-inner" id="recordBtnInner">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                            </div>
+                            <div class="record-pulse" id="recordPulse"></div>
+                        </button>
+                        <p class="record-hint" id="recordHint">Click to start recording</p>
+                        <div class="waveform" id="waveform" style="display:none">
+                            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                        </div>
+                    </div>
+
+                    <!-- Text mode -->
+                    <div class="interview-text-area" id="textArea" style="display:none">
+                        <textarea id="interviewAnswer" class="textarea" placeholder="Type your answer here..." rows="4"></textarea>
+                        <button class="btn btn-primary" id="submitTextBtn" onclick="submitTextAnswer()">
+                            Submit Answer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- End Interview Button -->
+                <div style="text-align:center;margin-top:16px;">
+                    <button class="btn btn-secondary" id="endInterviewBtn" onclick="endInterview()">
+                        End Interview &amp; Get Feedback
+                    </button>
+                </div>
+            </div>
+
+            <!-- Final Feedback (shown after ending) -->
+            <div class="results-area" id="interviewResults" style="display:none"></div>
         </section>
 
         <!-- JOB MATCHER TAB -->

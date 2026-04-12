@@ -12,17 +12,22 @@ except ImportError:          # fallback if pydantic-settings is not installed
 class Settings(BaseSettings):
     APP_NAME: str = "AI Career Assistant"
     DEBUG: bool = False
+    DATABASE_URL: str = Field(default="postgresql+psycopg2://postgres:postgres@localhost:5432/ai_assistant")
 
     # SerpApi API
     SERPAPI_KEY: str = Field(default="f857442d2559c379e9c411d42c84905de80f3fc1b1bd3f608021366f4af878e6")
-    
-    
 
     # Google API for Generative AI
     GOOGLE_API_KEY: str = Field(default="")
 
     # XAI API
     XAI_API_KEY: str = Field(default="")
+
+    # Groq API for LLM (interview + review)
+    GROQ_API_KEY: str = Field(default="")
+
+    # Deepgram API for STT/TTS (interview)
+    DEEPGRAM_API_KEY: str = Field(default="")
 
     class Config:
         env_file = ".env"

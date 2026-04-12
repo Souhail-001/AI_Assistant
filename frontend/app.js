@@ -1,20 +1,61 @@
 
 const API = '';  // Same-origin; adjust if running on different port
+const ACCESS_TOKEN_KEY = 'access_token';
+const authState = {
+    isAuthenticated: false,
+    initialized: false,
+};
 
 // ── Tab Navigation ─────────────────────────────────────────
+function setActiveTab(tabName) {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    const selectedTab = document.getElementById(`tab-${tabName}`);
+    if (selectedTab) {
+        selectedTab.classList.remove('active');
+        void selectedTab.offsetWidth;
+        selectedTab.classList.add('active');
+    }
+}
+
+function applyAuthGate() {
+    const isLoggedIn = authState.isAuthenticated;
+    document.body.classList.toggle('auth-locked', !isLoggedIn);
+
+    const registerBtn = document.getElementById('registerBtn');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (registerBtn) registerBtn.style.display = isLoggedIn ? 'none' : 'inline-flex';
+    if (loginBtn) loginBtn.style.display = isLoggedIn ? 'none' : 'inline-flex';
+    if (logoutBtn) logoutBtn.style.display = isLoggedIn ? 'inline-flex' : 'none';
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.disabled = !isLoggedIn;
+        btn.classList.toggle('disabled', !isLoggedIn);
+    });
+
+    if (!isLoggedIn) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    } else if (!document.querySelector('.tab-content.active')) {
+        setActiveTab('review');
+    }
+}
+
+function ensureAuthenticated() {
+    if (authState.isAuthenticated) return true;
+    setAuthStatus('🔒 Please log in first to access any feature.', 'error');
+    applyAuthGate();
+    return false;
+}
+
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        // Update nav
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        // Show tab
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        const tab = document.getElementById(`tab-${btn.dataset.tab}`);
-        if (tab) {
-            tab.classList.remove('active');
-            void tab.offsetWidth; // trigger reflow
-            tab.classList.add('active');
-        }
+        if (!ensureAuthenticated()) return;
+        setActiveTab(btn.dataset.tab);
     });
 });
 
@@ -69,6 +110,221 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+async function parseErrorMessage(resp) {
+    try {
+        const body = await resp.json();
+        return body?.detail || resp.statusText;
+    } catch {
+        return resp.statusText;
+    }
+}
+
+function setAuthStatus(message, type = '') {
+    const statusBox = document.getElementById('authStatus');
+    if (!statusBox) return;
+    statusBox.className = type ? `status-box ${type}` : 'status-box';
+    statusBox.textContent = message;
+    statusBox.style.display = 'block';
+}
+
+function setAccessToken(token) {
+    if (token) {
+        localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    } else {
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+    }
+}
+
+function getAccessToken() {
+    return localStorage.getItem(ACCESS_TOKEN_KEY) || '';
+}
+
+async function validateTokenWithServer(token) {
+    if (!token) return false;
+
+    try {
+        const resp = await fetch(`${API}/api/v1/auth/me`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            credentials: 'include',
+        });
+        return resp.ok;
+    } catch {
+        return false;
+    }
+}
+
+async function tryRefreshAccessToken() {
+    try {
+        const resp = await fetch(`${API}/api/v1/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+
+        if (!resp.ok) return null;
+
+        const data = await resp.json();
+        return data?.access_token || null;
+    } catch {
+        return null;
+    }
+}
+
+async function initializeAuthGate() {
+    applyAuthGate();
+
+    const storedToken = getAccessToken();
+    if (await validateTokenWithServer(storedToken)) {
+        authState.isAuthenticated = true;
+        authState.initialized = true;
+        setAuthStatus('✅ Logged in.', 'success');
+        applyAuthGate();
+        return;
+    }
+
+    const refreshedToken = await tryRefreshAccessToken();
+    if (refreshedToken && await validateTokenWithServer(refreshedToken)) {
+        setAccessToken(refreshedToken);
+        authState.isAuthenticated = true;
+        authState.initialized = true;
+        setAuthStatus('✅ Session restored.', 'success');
+        applyAuthGate();
+        return;
+    }
+
+    setAccessToken('');
+    authState.isAuthenticated = false;
+    authState.initialized = true;
+    applyAuthGate();
+}
+
+async function fetchWithAuth(url, options = {}) {
+    if (!ensureAuthenticated()) {
+        throw new Error('Authentication required');
+    }
+
+    const token = getAccessToken();
+    const headers = {
+        ...(options.headers || {}),
+        Authorization: `Bearer ${token}`,
+    };
+
+    const resp = await fetch(url, {
+        ...options,
+        headers,
+    });
+
+    if (resp.status === 401) {
+        setAccessToken('');
+        authState.isAuthenticated = false;
+        applyAuthGate();
+        setAuthStatus('🔒 Session expired. Please log in again.', 'error');
+    }
+
+    return resp;
+}
+
+async function submitRegister() {
+    const btn = document.getElementById('registerBtn');
+    const email = document.getElementById('registerEmail')?.value.trim();
+    const password = document.getElementById('registerPassword')?.value || '';
+
+    if (!email || !password) {
+        setAuthStatus('Please provide email and password to register.', 'error');
+        return;
+    }
+
+    setLoading(btn, true);
+    try {
+        const resp = await fetch(`${API}/api/v1/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: email, password }),
+        });
+
+        if (!resp.ok) {
+            throw new Error(await parseErrorMessage(resp));
+        }
+
+        setAuthStatus('✅ Registration successful. You can now log in.', 'success');
+    } catch (err) {
+        setAuthStatus(`❌ ${err.message}`, 'error');
+    } finally {
+        setLoading(btn, false);
+    }
+}
+
+async function submitLogin() {
+    const btn = document.getElementById('loginBtn');
+    const email = document.getElementById('loginEmail')?.value.trim();
+    const password = document.getElementById('loginPassword')?.value || '';
+
+    if (!email || !password) {
+        setAuthStatus('Please provide email and password to log in.', 'error');
+        return;
+    }
+
+    setLoading(btn, true);
+    try {
+        const body = new URLSearchParams();
+        body.append('username', email);
+        body.append('password', password);
+
+        const resp = await fetch(`${API}/api/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body,
+            credentials: 'include',
+        });
+
+        if (!resp.ok) {
+            throw new Error(await parseErrorMessage(resp));
+        }
+
+        const data = await resp.json();
+        const accessToken = data?.access_token || '';
+        setAccessToken(accessToken);
+
+        const valid = await validateTokenWithServer(accessToken);
+        if (!valid) {
+            setAccessToken('');
+            authState.isAuthenticated = false;
+            applyAuthGate();
+            throw new Error('Login completed but token validation failed. Please try again.');
+        }
+
+        authState.isAuthenticated = true;
+        authState.initialized = true;
+        setAuthStatus('✅ Login successful.', 'success');
+        applyAuthGate();
+    } catch (err) {
+        setAuthStatus(`❌ ${err.message}`, 'error');
+    } finally {
+        setLoading(btn, false);
+    }
+}
+
+async function submitLogout() {
+    const btn = document.getElementById('logoutBtn');
+    setLoading(btn, true);
+    try {
+        await fetch(`${API}/api/v1/auth/logout`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+        setAccessToken('');
+        authState.isAuthenticated = false;
+        setAuthStatus('✅ Logged out successfully.', 'success');
+        applyAuthGate();
+    } catch (err) {
+        setAuthStatus(`❌ ${err.message}`, 'error');
+    } finally {
+        setLoading(btn, false);
+    }
 }
 
 function parseReviewList(rawBlock) {
@@ -237,6 +493,8 @@ function renderScoreCard({ score, verdict, summary }) {
 // FEATURE 1: Resume Review
 // ═══════════════════════════════════════════════════════════
 async function submitReview() {
+    if (!ensureAuthenticated()) return;
+
     const btn = document.getElementById('reviewBtn');
     const resultsArea = document.getElementById('reviewResults');
     const file = fileInput.files[0];
@@ -257,14 +515,14 @@ async function submitReview() {
             const formData = new FormData();
             formData.append('file', file);
             if (jobDesc) formData.append('job_description', jobDesc);
-            const resp = await fetch(`${API}/api/v1/review/upload`, {
+            const resp = await fetchWithAuth(`${API}/api/v1/review/upload`, {
                 method: 'POST',
                 body: formData,
             });
             if (!resp.ok) throw new Error((await resp.json()).detail || resp.statusText);
             data = await resp.json();
         } else {
-            const resp = await fetch(`${API}/api/v1/review/text`, {
+            const resp = await fetchWithAuth(`${API}/api/v1/review/text`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -425,7 +683,19 @@ function renderReviewResults(data, container) {
 // ═══════════════════════════════════════════════════════════
 // FEATURE 2: AI Interviewer
 // ═══════════════════════════════════════════════════════════
+const interviewState = {
+    sessionId: null,
+    questionNumber: 0,
+    totalQuestions: 6,
+    isRecording: false,
+    mediaRecorder: null,
+    audioChunks: [],
+    inputMode: 'voice', // 'voice' or 'text'
+};
+
 async function startInterview() {
+    if (!ensureAuthenticated()) return;
+
     const btn = document.getElementById('startInterviewBtn');
     const statusBox = document.getElementById('interviewStatus');
     const role = document.getElementById('interviewRole').value.trim();
@@ -439,16 +709,13 @@ async function startInterview() {
     setLoading(btn, true);
     statusBox.style.display = 'block';
     statusBox.className = 'status-box';
-    statusBox.textContent = '⏳ Creating interview room...';
+    statusBox.textContent = '⏳ Setting up your interview...';
 
     try {
-        const resp = await fetch(`${API}/api/v1/interview/start`, {
+        const resp = await fetchWithAuth(`${API}/api/v1/interview/start`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                job_role: role,
-                difficulty: difficulty,
-            }),
+            body: JSON.stringify({ job_role: role, difficulty }),
         });
 
         if (!resp.ok) {
@@ -457,15 +724,27 @@ async function startInterview() {
         }
 
         const data = await resp.json();
-        statusBox.className = 'status-box success';
-        statusBox.innerHTML = `
-            <p>✅ Interview room created!</p>
-            <p style="margin-top:8px;font-size:0.85rem;color:var(--text-secondary)">
-                <strong>Room:</strong> ${data.room_name}<br>
-                <strong>LiveKit URL:</strong> ${data.livekit_url}<br>
-                <small>Connect using a LiveKit client with the provided token to start your interview.</small>
-            </p>
-        `;
+        interviewState.sessionId = data.session_id;
+        interviewState.questionNumber = 1;
+        interviewState.totalQuestions = data.total_questions || 6;
+
+        // Hide setup, show active area
+        document.getElementById('interviewSetup').style.display = 'none';
+        statusBox.style.display = 'none';
+        document.getElementById('interviewActive').style.display = 'block';
+        document.getElementById('interviewResults').style.display = 'none';
+
+        // Set role badge
+        document.getElementById('interviewRoleBadge').textContent = `${role} · ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`;
+
+        // Update progress
+        updateInterviewProgress();
+
+        // Render first question
+        const transcript = document.getElementById('interviewTranscript');
+        transcript.innerHTML = '';
+        addTranscriptBubble('ai', data.question, data.audio_base64);
+
     } catch (err) {
         statusBox.className = 'status-box error';
         statusBox.textContent = `❌ ${err.message}`;
@@ -474,10 +753,345 @@ async function startInterview() {
     }
 }
 
+function updateInterviewProgress() {
+    const fill = document.getElementById('interviewProgressFill');
+    const label = document.getElementById('interviewProgressLabel');
+    const pct = (interviewState.questionNumber / interviewState.totalQuestions) * 100;
+    fill.style.width = `${pct}%`;
+    label.textContent = `Question ${interviewState.questionNumber} / ${interviewState.totalQuestions}`;
+}
+
+function addTranscriptBubble(role, text, audioBase64 = null) {
+    const transcript = document.getElementById('interviewTranscript');
+    const bubble = document.createElement('div');
+    bubble.className = `transcript-bubble transcript-${role}`;
+
+    const label = role === 'ai' ? '🤖 Interviewer' : '👤 You';
+    let audioHtml = '';
+    if (audioBase64) {
+        audioHtml = `
+            <div class="transcript-audio">
+                <button class="play-audio-btn" onclick="playAudioBase64(this, '${audioBase64}')">
+                    ▶ Play Audio
+                </button>
+            </div>`;
+    }
+
+    bubble.innerHTML = `
+        <div class="transcript-role">${label}</div>
+        <div class="transcript-text">${escapeHtml(text)}</div>
+        ${audioHtml}
+    `;
+
+    transcript.appendChild(bubble);
+    transcript.scrollTop = transcript.scrollHeight;
+}
+
+function addTranscriptFeedback(feedback) {
+    const transcript = document.getElementById('interviewTranscript');
+    const div = document.createElement('div');
+    div.className = 'transcript-feedback';
+    div.innerHTML = `<strong>📝 Feedback:</strong> ${escapeHtml(feedback)}`;
+    transcript.appendChild(div);
+    transcript.scrollTop = transcript.scrollHeight;
+}
+
+function playAudioBase64(btn, base64Data) {
+    try {
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        const origText = btn.textContent;
+        btn.textContent = '⏸ Playing...';
+        btn.disabled = true;
+        audio.play();
+        audio.onended = () => {
+            btn.textContent = origText;
+            btn.disabled = false;
+            URL.revokeObjectURL(url);
+        };
+        audio.onerror = () => {
+            btn.textContent = origText;
+            btn.disabled = false;
+        };
+    } catch (e) {
+        console.error('Audio playback error:', e);
+    }
+}
+
+// ── Input mode toggle ────────────────────────────────
+function setInterviewMode(mode) {
+    interviewState.inputMode = mode;
+    document.getElementById('voiceArea').style.display = mode === 'voice' ? 'flex' : 'none';
+    document.getElementById('textArea').style.display = mode === 'text' ? 'block' : 'none';
+    document.getElementById('modeVoiceBtn').classList.toggle('active', mode === 'voice');
+    document.getElementById('modeTextBtn').classList.toggle('active', mode === 'text');
+}
+
+// ── Voice recording ──────────────────────────────────
+async function toggleRecording() {
+    if (interviewState.isRecording) {
+        stopRecording();
+    } else {
+        await startRecording();
+    }
+}
+
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        interviewState.audioChunks = [];
+        interviewState.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+
+        interviewState.mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) interviewState.audioChunks.push(e.data);
+        };
+
+        interviewState.mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(track => track.stop());
+            const audioBlob = new Blob(interviewState.audioChunks, { type: 'audio/webm' });
+            await submitAudioAnswer(audioBlob);
+        };
+
+        interviewState.mediaRecorder.start();
+        interviewState.isRecording = true;
+
+        document.getElementById('recordBtnInner').classList.add('recording');
+        document.getElementById('recordPulse').classList.add('active');
+        document.getElementById('waveform').style.display = 'flex';
+        document.getElementById('recordHint').textContent = 'Recording... Click to stop';
+    } catch (err) {
+        alert('Microphone access denied. Please allow microphone access or use text mode.');
+        console.error('Mic error:', err);
+    }
+}
+
+function stopRecording() {
+    if (interviewState.mediaRecorder && interviewState.mediaRecorder.state !== 'inactive') {
+        interviewState.mediaRecorder.stop();
+    }
+    interviewState.isRecording = false;
+
+    document.getElementById('recordBtnInner').classList.remove('recording');
+    document.getElementById('recordPulse').classList.remove('active');
+    document.getElementById('waveform').style.display = 'none';
+    document.getElementById('recordHint').textContent = 'Processing...';
+}
+
+// ── Submit audio answer ──────────────────────────────
+async function submitAudioAnswer(audioBlob) {
+    const inputCard = document.getElementById('interviewInputCard');
+
+    disableAnswerInput(true);
+
+    try {
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'recording.webm');
+
+        const resp = await fetchWithAuth(`${API}/api/v1/interview/${interviewState.sessionId}/answer-audio`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!resp.ok) {
+            const errData = await resp.json();
+            throw new Error(errData.detail || resp.statusText);
+        }
+
+        const data = await resp.json();
+        handleAnswerResponse(data, '(voice answer)');
+    } catch (err) {
+        addTranscriptBubble('user', `❌ Error: ${err.message}`);
+    } finally {
+        disableAnswerInput(false);
+        document.getElementById('recordHint').textContent = 'Click to start recording';
+    }
+}
+
+// ── Submit text answer ───────────────────────────────
+async function submitTextAnswer() {
+    const textarea = document.getElementById('interviewAnswer');
+    const answer = textarea.value.trim();
+
+    if (!answer) {
+        alert('Please type your answer before submitting.');
+        return;
+    }
+
+    disableAnswerInput(true);
+
+    try {
+        const resp = await fetchWithAuth(`${API}/api/v1/interview/${interviewState.sessionId}/answer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answer }),
+        });
+
+        if (!resp.ok) {
+            const errData = await resp.json();
+            throw new Error(errData.detail || resp.statusText);
+        }
+
+        const data = await resp.json();
+        textarea.value = '';
+        handleAnswerResponse(data, answer);
+    } catch (err) {
+        addTranscriptBubble('user', `❌ Error: ${err.message}`);
+    } finally {
+        disableAnswerInput(false);
+    }
+}
+
+function handleAnswerResponse(data, answerText) {
+    // Show user's answer
+    addTranscriptBubble('user', answerText);
+
+    // Show feedback
+    if (data.feedback) {
+        addTranscriptFeedback(data.feedback);
+    }
+
+    if (data.is_last || !data.next_question) {
+        // Interview complete — auto-end
+        document.getElementById('interviewInputCard').style.display = 'none';
+        addTranscriptBubble('ai', '✅ That concludes our interview! Click "End Interview" for your final evaluation.');
+    } else {
+        // Show next question
+        interviewState.questionNumber = data.question_number + 1;
+        updateInterviewProgress();
+        addTranscriptBubble('ai', data.next_question, data.audio_base64);
+    }
+}
+
+function disableAnswerInput(disabled) {
+    const recordBtn = document.getElementById('recordBtn');
+    const submitBtn = document.getElementById('submitTextBtn');
+    const textarea = document.getElementById('interviewAnswer');
+    if (recordBtn) recordBtn.disabled = disabled;
+    if (submitBtn) {
+        if (disabled) {
+            setLoading(submitBtn, true);
+        } else {
+            setLoading(submitBtn, false);
+        }
+    }
+    if (textarea) textarea.disabled = disabled;
+}
+
+// ── End interview ────────────────────────────────────
+async function endInterview() {
+    if (!interviewState.sessionId) return;
+
+    const btn = document.getElementById('endInterviewBtn');
+    setLoading(btn, true);
+
+    try {
+        const resp = await fetchWithAuth(`${API}/api/v1/interview/${interviewState.sessionId}/end`, {
+            method: 'POST',
+        });
+
+        if (!resp.ok) {
+            const errData = await resp.json();
+            throw new Error(errData.detail || resp.statusText);
+        }
+
+        const data = await resp.json();
+        renderInterviewFeedback(data);
+
+        // Hide active, show results
+        document.getElementById('interviewActive').style.display = 'none';
+
+    } catch (err) {
+        const results = document.getElementById('interviewResults');
+        results.innerHTML = `<div class="status-box error">❌ ${err.message}</div>`;
+        results.style.display = 'block';
+    } finally {
+        setLoading(btn, false);
+        interviewState.sessionId = null;
+    }
+}
+
+function renderInterviewFeedback(data) {
+    const container = document.getElementById('interviewResults');
+
+    // Score card
+    const score = data.score ?? null;
+    const scoreValue = score !== null ? score : 0;
+    const scoreLabel = score !== null ? String(score) : '—';
+    const circumference = 2 * Math.PI * 34;
+    const offset = circumference - (scoreValue / 100) * circumference;
+
+    let verdict = '';
+    if (score !== null) {
+        if (score >= 80) verdict = 'STRONG';
+        else if (score >= 60) verdict = 'GOOD';
+        else if (score >= 40) verdict = 'NEEDS IMPROVEMENT';
+        else verdict = 'WEAK';
+    }
+
+    const feedbackText = escapeHtml(data.final_feedback || '').replace(/\n/g, '<br>');
+
+    container.innerHTML = `
+        <div class="review-report">
+            <svg width="0" height="0"><defs><linearGradient id="scoreGradI" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#00D4FF"/></linearGradient></defs></svg>
+
+            <div class="result-card review-score-card">
+                <div class="result-header">
+                    <div class="score-ring">
+                        <svg viewBox="0 0 80 80">
+                            <circle class="bg-circle" cx="40" cy="40" r="34"/>
+                            <circle class="score-circle" cx="40" cy="40" r="34"
+                                stroke-dasharray="${circumference}"
+                                stroke-dashoffset="${offset}"/>
+                        </svg>
+                        <div class="score-value">${scoreLabel}</div>
+                    </div>
+                    <div class="result-summary">
+                        <div class="review-head-meta">
+                            <h3>Interview Score</h3>
+                            ${verdict ? `<span class="review-verdict review-verdict-${verdict.toLowerCase().replace(/\s+/g, '-')}">${verdict}</span>` : ''}
+                        </div>
+                        <p>${data.questions_answered} of ${data.total_questions} questions answered</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-card review-panel review-panel-outlook">
+                <h3>📋 Detailed Evaluation</h3>
+                <div class="review-outlook-text">${feedbackText}</div>
+            </div>
+
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-primary" onclick="resetInterview()">Start New Interview</button>
+            </div>
+        </div>
+    `;
+    container.style.display = 'block';
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetInterview() {
+    interviewState.sessionId = null;
+    interviewState.questionNumber = 0;
+    document.getElementById('interviewSetup').style.display = 'block';
+    document.getElementById('interviewActive').style.display = 'none';
+    document.getElementById('interviewResults').style.display = 'none';
+    document.getElementById('interviewInputCard').style.display = 'block';
+    document.getElementById('interviewStatus').style.display = 'none';
+    document.getElementById('interviewTranscript').innerHTML = '';
+}
+
 // ═══════════════════════════════════════════════════════════
 // FEATURE 3: Job Matcher
 // ═══════════════════════════════════════════════════════════
 async function matchJobs() {
+    if (!ensureAuthenticated()) return;
+
     const btn = document.getElementById('matchBtn');
     const resultsArea = document.getElementById('jobResults');
     const resumeText = document.getElementById('jobResumeText').value.trim();
@@ -493,7 +1107,7 @@ async function matchJobs() {
     resultsArea.style.display = 'none';
 
     try {
-        const resp = await fetch(`${API}/api/v1/jobs/match`, {
+        const resp = await fetchWithAuth(`${API}/api/v1/jobs/match`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -566,6 +1180,8 @@ function renderJobResults(data, container) {
 // FEATURE 4: Digital Footprint
 // ═══════════════════════════════════════════════════════════
 async function generateFootprint() {
+    if (!ensureAuthenticated()) return;
+
     const btn = document.getElementById('footprintBtn');
     const resultsArea = document.getElementById('footprintResults');
     const github = document.getElementById('githubUser').value.trim();
@@ -580,7 +1196,7 @@ async function generateFootprint() {
     resultsArea.style.display = 'none';
 
     try {
-        const resp = await fetch(`${API}/api/v1/footprint/generate`, {
+        const resp = await fetchWithAuth(`${API}/api/v1/footprint/generate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -715,3 +1331,5 @@ function renderFootprintResults(data, container) {
     container.style.display = 'block';
     container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+initializeAuthGate();

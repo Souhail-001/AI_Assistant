@@ -188,6 +188,12 @@ body {
     box-shadow: var(--shadow-btn);
 }
 
+.nav-btn.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* ── Main ───────────────────────────────────────────────── */
 .main {
     position: relative;
@@ -205,6 +211,33 @@ body {
 
 .tab-content.active {
     display: block;
+}
+
+body.auth-locked .tab-content {
+    display: none !important;
+}
+
+body.auth-locked .auth-section {
+    display: block;
+}
+
+body:not(.auth-locked) .auth-section {
+    display: none;
+}
+
+.auth-gate-banner {
+    display: none;
+    margin-bottom: 20px;
+}
+
+body.auth-locked .auth-gate-banner {
+    display: block;
+}
+
+body.auth-locked .auth-gate-banner .status-box {
+    border-color: rgba(255, 152, 0, 0.35);
+    background: rgba(255, 152, 0, 0.08);
+    color: #ffc980;
 }
 
 @keyframes fadeSlide {
@@ -937,6 +970,328 @@ select.input {
 .strength-Moderate { background: rgba(255, 152, 0, 0.1); color: var(--warning); border: 1px solid rgba(255, 152, 0, 0.25); }
 .strength-Weak { background: rgba(244, 67, 54, 0.1); color: var(--error); border: 1px solid rgba(244, 67, 54, 0.25); }
 
+/* ── AI Interview ───────────────────────────────────────── */
+.interview-progress-card {
+    padding: 16px 24px;
+}
+
+.interview-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.interview-progress-header span:first-child {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.interview-role-badge {
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(108, 99, 255, 0.12);
+    border: 1px solid rgba(108, 99, 255, 0.25);
+    color: var(--accent-1);
+}
+
+.interview-progress-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+
+.interview-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent-gradient);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interview-conversation-card {
+    max-height: 500px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.interview-conversation-card h3 {
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.interview-transcript {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+    max-height: 420px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.transcript-bubble {
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    max-width: 90%;
+    animation: bubbleFadeIn 0.3s ease;
+}
+
+@keyframes bubbleFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.transcript-ai {
+    background: linear-gradient(135deg, rgba(108, 99, 255, 0.1) 0%, rgba(0, 212, 255, 0.06) 100%);
+    border: 1px solid rgba(108, 99, 255, 0.2);
+    align-self: flex-start;
+}
+
+.transcript-user {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    align-self: flex-end;
+}
+
+.transcript-role {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.transcript-text {
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.transcript-audio {
+    margin-top: 8px;
+}
+
+.play-audio-btn {
+    padding: 4px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(108, 99, 255, 0.3);
+    background: rgba(108, 99, 255, 0.1);
+    color: var(--accent-1);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.play-audio-btn:hover {
+    background: rgba(108, 99, 255, 0.2);
+    border-color: rgba(108, 99, 255, 0.5);
+}
+
+.play-audio-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.transcript-feedback {
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.18);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    align-self: flex-start;
+    max-width: 90%;
+    animation: bubbleFadeIn 0.3s ease;
+}
+
+.transcript-feedback strong {
+    color: var(--success);
+}
+
+/* ── Interview Input ───────────────────────────────── */
+.interview-input-card {
+    text-align: center;
+}
+
+.interview-input-mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.mode-btn {
+    padding: 8px 20px;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.mode-btn.active {
+    background: rgba(108, 99, 255, 0.15);
+    border-color: rgba(108, 99, 255, 0.35);
+    color: var(--accent-1);
+}
+
+.mode-btn:hover {
+    border-color: var(--border-glow);
+}
+
+/* ── Voice Record Button ───────────────────────────── */
+.interview-voice-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.record-btn {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+}
+
+.record-btn-inner {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(108, 99, 255, 0.3);
+}
+
+.record-btn-inner svg {
+    width: 28px;
+    height: 28px;
+    color: #fff;
+}
+
+.record-btn-inner.recording {
+    background: linear-gradient(135deg, #f44336, #ff5722);
+    box-shadow: 0 4px 25px rgba(244, 67, 54, 0.4);
+    animation: recordPulseBtn 1.5s infinite;
+}
+
+@keyframes recordPulseBtn {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.record-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px;
+    height: 80px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.record-pulse.active {
+    animation: pulseRing 1.5s infinite;
+    border: 2px solid rgba(244, 67, 54, 0.4);
+}
+
+@keyframes pulseRing {
+    0% { width: 80px; height: 80px; opacity: 1; }
+    100% { width: 120px; height: 120px; opacity: 0; }
+}
+
+.record-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.record-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Waveform Animation ────────────────────────────── */
+.waveform {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 30px;
+}
+
+.wave-bar {
+    width: 4px;
+    height: 8px;
+    background: var(--accent-gradient);
+    border-radius: 999px;
+    animation: waveAnim 0.6s ease-in-out infinite alternate;
+}
+
+.wave-bar:nth-child(1) { animation-delay: 0s; }
+.wave-bar:nth-child(2) { animation-delay: 0.08s; }
+.wave-bar:nth-child(3) { animation-delay: 0.16s; }
+.wave-bar:nth-child(4) { animation-delay: 0.24s; }
+.wave-bar:nth-child(5) { animation-delay: 0.32s; }
+.wave-bar:nth-child(6) { animation-delay: 0.4s; }
+.wave-bar:nth-child(7) { animation-delay: 0.32s; }
+.wave-bar:nth-child(8) { animation-delay: 0.24s; }
+.wave-bar:nth-child(9) { animation-delay: 0.16s; }
+
+@keyframes waveAnim {
+    from { height: 6px; }
+    to { height: 26px; }
+}
+
+/* ── Interview Text Area ───────────────────────────── */
+.interview-text-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 28px;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    background: rgba(255, 152, 0, 0.1);
+    color: var(--warning);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 152, 0, 0.2);
+    border-color: rgba(255, 152, 0, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* ── Footer ─────────────────────────────────────────────── */
 .footer {
     position: relative;
@@ -975,4 +1330,20 @@ select.input {
     .card { padding: 20px; }
 
     .form-row { flex-direction: column; }
+
+    .interview-progress-header {
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-start;
+    }
+
+    .record-btn-inner {
+        width: 64px;
+        height: 64px;
+    }
+
+    .record-btn {
+        width: 64px;
+        height: 64px;
+    }
 }

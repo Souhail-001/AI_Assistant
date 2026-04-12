@@ -3,11 +3,12 @@
 import os
 import tempfile
 from typing import Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from pydantic import BaseModel
+from app.core.security import get_current_username
 from app.services.review import process_cv_review, process_cv_text
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_username)])
 
 class ReviewTextRequest(BaseModel):
     resume_text: str

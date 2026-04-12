@@ -1,11 +1,12 @@
 """Job Matcher API endpoints."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from app.core.security import get_current_username
 from app.models.job import JobMatchRequest, JobMatchResponse, JobMatch
 from app.services.job_matcher.embedder import extract_keywords, rank_jobs
 from app.services.job_matcher.serpapi_client import search_jobs
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_username)])
 
 
 @router.post("/match", response_model=JobMatchResponse)

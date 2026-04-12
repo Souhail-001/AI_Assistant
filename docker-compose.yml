@@ -1,6 +1,14 @@
-version: '3.8'
-
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ai_assistant
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   web:
     build: .
     ports:
@@ -9,6 +17,12 @@ services:
       - .:/app
     environment:
       - APP_NAME=AI Career Assistant Platform
+      - DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/ai_assistant
     env_file:
       - .env
+    depends_on:
+      - db
     restart: unless-stopped
+
+volumes:
+  postgres_data:

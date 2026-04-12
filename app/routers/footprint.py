@@ -1,6 +1,7 @@
 """Digital Footprint API endpoints."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from app.core.security import get_current_username
 from app.models.footprint import (
     FootprintRequest,
     FootprintSummary,
@@ -12,7 +13,7 @@ from app.services.footprint.github_fetcher import fetch_github_profile
 from app.services.footprint.linkedin_fetcher import fetch_linkedin_profile
 from app.services.footprint.summarizer import generate_footprint_summary
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_username)])
 
 
 @router.post("/generate", response_model=FootprintSummary)
