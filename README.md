@@ -11,7 +11,7 @@
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in your keys:
+Copy `.env.template` to `.env` and fill in your keys:
 
 ```env
 GROQ_API_KEY="your-groq-api-key"
