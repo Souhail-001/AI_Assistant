@@ -1,6 +1,6 @@
 venv/
 .venv/
-.env.example/
+.env.example
 __pycache__/
 *.pyc
 .env
