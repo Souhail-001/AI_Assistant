@@ -29,6 +29,31 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+
+# ── Rate Limiter Setup ──────────────────────────────────────
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from app.core.limiter import limiter
+
+app.add_middleware(SlowAPIMiddleware)
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    retry_after = "60" # Default static fallback to seconds if header is missing in mock/memory backend
+    if hasattr(exc, 'headers') and exc.headers:
+        retry_after = exc.headers.get("Retry-After", retry_after)
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "rate_limit_exceeded",
+            "message": "You are sending requests too fast. Please wait before retrying.",
+            "retry_after": retry_after
+        }
+    )
+
 # ── CORS ────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,

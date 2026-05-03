@@ -3,7 +3,8 @@
 import os
 import tempfile
 from typing import Optional
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends, Request
+from app.core.limiter import limiter
 from pydantic import BaseModel
 from app.core.security import get_current_username
 from app.services.review import process_cv_review, process_cv_text
@@ -38,9 +39,10 @@ async def review_upload(file: UploadFile = File(...), job_description: Optional[
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/text")
-async def review_text(request: ReviewTextRequest):
+@limiter.limit("10/minute")
+async def review_text(request: Request, body_req: ReviewTextRequest):
     try:
-        review_result = process_cv_text(request.resume_text, request.job_description)
+        review_result = process_cv_text(body_req.resume_text, body_req.job_description)
         return {"review": review_result}
     except Exception as e:
         print("Error during /text CV:", e)
