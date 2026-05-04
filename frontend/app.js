@@ -5,65 +5,102 @@ const authState = {
     isAuthenticated: false,
     initialized: false,
 };
+const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+const RESUME_EXTENSIONS = ['pdf', 'doc', 'docx', 'txt'];
+const RESUME_MIME_TYPES = new Set([
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+]);
+
+let uploadZone = null;
+let fileInput = null;
 
 // ── Tab Navigation ─────────────────────────────────────────
 function setActiveTab(tabName) {
+    if (!authState.isAuthenticated) {
+        applyAuthGate();
+        return;
+    }
+
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tabName);
     });
 
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+        tab.style.display = 'none';
+        tab.style.pointerEvents = 'auto';
+    });
     const selectedTab = document.getElementById(`tab-${tabName}`);
     if (selectedTab) {
         selectedTab.classList.remove('active');
         void selectedTab.offsetWidth;
         selectedTab.classList.add('active');
+        selectedTab.style.display = 'block';
+    }
+
+    if (tabName === 'history') {
+        loadHistory();
     }
 }
 
 function applyAuthGate() {
     const isLoggedIn = authState.isAuthenticated;
-    document.body.classList.toggle('auth-locked', !isLoggedIn);
-
-    const registerBtn = document.getElementById('registerBtn');
-    const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-
-    if (registerBtn) registerBtn.style.display = isLoggedIn ? 'none' : 'inline-flex';
-    if (loginBtn) loginBtn.style.display = isLoggedIn ? 'none' : 'inline-flex';
     if (logoutBtn) logoutBtn.style.display = isLoggedIn ? 'inline-flex' : 'none';
-
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.disabled = !isLoggedIn;
         btn.classList.toggle('disabled', !isLoggedIn);
     });
-
-    if (!isLoggedIn) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    } else if (!document.querySelector('.tab-content.active')) {
+    if (isLoggedIn && !document.querySelector('.tab-content.active')) {
         setActiveTab('review');
+    }
+}
+
+// ── Page Router ────────────────────────────────────────────
+function showPage(name, authMode) {
+    if (name === 'dashboard' && !authState.isAuthenticated) {
+        name = 'auth';
+    }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('page-' + name);
+    if (target) target.classList.add('active');
+    window.scrollTo(0, 0);
+
+    if (name === 'home') {
+        initParticles();
+        initScrollReveal();
+        runStatCounters();
+    }
+    if (name === 'auth' && authMode) {
+        switchAuthForm(authMode);
+    }
+    if (name === 'dashboard') {
+        applyAuthGate();
     }
 }
 
 function ensureAuthenticated() {
     if (authState.isAuthenticated) return true;
-    setAuthStatus('🔒 Please log in first to access any feature.', 'error');
-    applyAuthGate();
+    showPage('auth');
+    setAuthStatus('🔒 Please log in first.', 'error');
     return false;
 }
 
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        if (!ensureAuthenticated()) return;
-        setActiveTab(btn.dataset.tab);
-    });
-});
-
 // ── File Upload Drag & Drop ────────────────────────────────
-const uploadZone = document.getElementById('uploadZone');
-const fileInput = document.getElementById('resumeFile');
+function setupUploadZone() {
+    uploadZone = document.getElementById('uploadZone');
+    fileInput = document.getElementById('resumeFile');
 
-if (uploadZone && fileInput) {
+    if (!uploadZone || !fileInput) return;
+
+    fileInput.setAttribute(
+        'accept',
+        '.pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain'
+    );
+
     uploadZone.addEventListener('click', () => fileInput.click());
 
     uploadZone.addEventListener('dragover', e => {
@@ -175,31 +212,25 @@ async function tryRefreshAccessToken() {
 }
 
 async function initializeAuthGate() {
-    applyAuthGate();
-
     const storedToken = getAccessToken();
     if (await validateTokenWithServer(storedToken)) {
         authState.isAuthenticated = true;
         authState.initialized = true;
-        setAuthStatus('✅ Logged in.', 'success');
-        applyAuthGate();
+        showPage('dashboard');
         return;
     }
-
     const refreshedToken = await tryRefreshAccessToken();
     if (refreshedToken && await validateTokenWithServer(refreshedToken)) {
         setAccessToken(refreshedToken);
         authState.isAuthenticated = true;
         authState.initialized = true;
-        setAuthStatus('✅ Session restored.', 'success');
-        applyAuthGate();
+        showPage('dashboard');
         return;
     }
-
     setAccessToken('');
     authState.isAuthenticated = false;
     authState.initialized = true;
-    applyAuthGate();
+    showPage('home');
 }
 
 async function fetchWithAuth(url, options = {}) {
@@ -229,7 +260,7 @@ async function fetchWithAuth(url, options = {}) {
 }
 
 async function submitRegister() {
-    const btn = document.getElementById('registerBtn');
+    const btn = document.getElementById('registerSubmitBtn');
     const email = document.getElementById('registerEmail')?.value.trim();
     const password = document.getElementById('registerPassword')?.value || '';
 
@@ -259,7 +290,7 @@ async function submitRegister() {
 }
 
 async function submitLogin() {
-    const btn = document.getElementById('loginBtn');
+    const btn = document.getElementById('loginSubmitBtn');
     const email = document.getElementById('loginEmail')?.value.trim();
     const password = document.getElementById('loginPassword')?.value || '';
 
@@ -299,8 +330,7 @@ async function submitLogin() {
 
         authState.isAuthenticated = true;
         authState.initialized = true;
-        setAuthStatus('✅ Login successful.', 'success');
-        applyAuthGate();
+        showPage('dashboard');
     } catch (err) {
         setAuthStatus(`❌ ${err.message}`, 'error');
     } finally {
@@ -318,8 +348,7 @@ async function submitLogout() {
         });
         setAccessToken('');
         authState.isAuthenticated = false;
-        setAuthStatus('✅ Logged out successfully.', 'success');
-        applyAuthGate();
+        showPage('home');
     } catch (err) {
         setAuthStatus(`❌ ${err.message}`, 'error');
     } finally {
@@ -405,6 +434,23 @@ function parseReviewText(reviewText) {
     };
 }
 
+function validateResumeFile(file) {
+    if (!file) return null;
+    if (file.size > MAX_RESUME_BYTES) {
+        return 'File is too large. Max size is 5MB.';
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const isValidExtension = RESUME_EXTENSIONS.includes(extension);
+    const isValidMime = RESUME_MIME_TYPES.has(file.type);
+
+    if (!isValidExtension && !isValidMime) {
+        return 'Unsupported file type. Please upload PDF, DOCX, DOC, or TXT.';
+    }
+
+    return null;
+}
+
 function normalizeVerdict(verdict) {
     if (!verdict) return null;
     const value = String(verdict).trim().toUpperCase();
@@ -465,7 +511,7 @@ function renderScoreCard({ score, verdict, summary }) {
     const verdictClass = finalVerdict ? `review-verdict review-verdict-${finalVerdict.toLowerCase()}` : 'review-verdict';
 
     return `
-        <svg width="0" height="0"><defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#00D4FF"/></linearGradient></defs></svg>
+        <svg width="0" height="0"><defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5ef5c4"/><stop offset="50%" stop-color="#36c7d0"/><stop offset="100%" stop-color="#e879a8"/></linearGradient></defs></svg>
         <div class="result-card review-score-card">
             <div class="result-header">
                 <div class="score-ring">
@@ -497,12 +543,18 @@ async function submitReview() {
 
     const btn = document.getElementById('reviewBtn');
     const resultsArea = document.getElementById('reviewResults');
-    const file = fileInput.files[0];
+    const file = fileInput?.files?.[0];
     const textInput = document.getElementById('resumeText').value.trim();
     const jobDesc = document.getElementById('jobDesc').value.trim();
 
     if (!file && !textInput) {
         alert('Please upload a file or paste your resume text.');
+        return;
+    }
+
+    const fileError = validateResumeFile(file);
+    if (fileError) {
+        alert(fileError);
         return;
     }
 
@@ -1038,7 +1090,7 @@ function renderInterviewFeedback(data) {
 
     container.innerHTML = `
         <div class="review-report">
-            <svg width="0" height="0"><defs><linearGradient id="scoreGradI" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6C63FF"/><stop offset="100%" stop-color="#00D4FF"/></linearGradient></defs></svg>
+            <svg width="0" height="0"><defs><linearGradient id="scoreGradI" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5ef5c4"/><stop offset="50%" stop-color="#36c7d0"/><stop offset="100%" stop-color="#e879a8"/></linearGradient></defs></svg>
 
             <div class="result-card review-score-card">
                 <div class="result-header">
@@ -1331,5 +1383,191 @@ function renderFootprintResults(data, container) {
     container.style.display = 'block';
     container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+function bindNavigationHandlers() {
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!ensureAuthenticated()) return;
+            setActiveTab(btn.dataset.tab);
+        });
+    });
+}
 
-initializeAuthGate();
+function switchAuthForm(mode) {
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const tabLogin = document.getElementById('authTabLogin');
+    const tabRegister = document.getElementById('authTabRegister');
+    if (mode === 'register') {
+        if (loginForm) loginForm.style.display = 'none';
+        if (registerForm) registerForm.style.display = 'block';
+        if (tabLogin) tabLogin.classList.remove('active');
+        if (tabRegister) tabRegister.classList.add('active');
+    } else {
+        if (loginForm) loginForm.style.display = 'block';
+        if (registerForm) registerForm.style.display = 'none';
+        if (tabLogin) tabLogin.classList.add('active');
+        if (tabRegister) tabRegister.classList.remove('active');
+    }
+}
+
+function bindAuthHandlers() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', e => { e.preventDefault(); submitLogout(); });
+
+    const tabLogin = document.getElementById('authTabLogin');
+    const tabRegister = document.getElementById('authTabRegister');
+    if (tabLogin) tabLogin.addEventListener('click', () => switchAuthForm('login'));
+    if (tabRegister) tabRegister.addEventListener('click', () => switchAuthForm('register'));
+
+    const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+    if (loginSubmitBtn) loginSubmitBtn.addEventListener('click', e => { e.preventDefault(); submitLogin(); });
+
+    const registerSubmitBtn = document.getElementById('registerSubmitBtn');
+    if (registerSubmitBtn) registerSubmitBtn.addEventListener('click', e => { e.preventDefault(); submitRegister(); });
+}
+
+function bindFeatureHandlers() {
+    const handlers = [
+        ['reviewBtn', submitReview], ['startInterviewBtn', startInterview],
+        ['recordBtn', toggleRecording], ['submitTextBtn', submitTextAnswer],
+        ['endInterviewBtn', endInterview], ['matchBtn', matchJobs],
+        ['footprintBtn', generateFootprint],
+        ['modeVoiceBtn', () => setInterviewMode('voice')],
+        ['modeTextBtn', () => setInterviewMode('text')],
+    ];
+    handlers.forEach(([id, fn]) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', e => { e.preventDefault(); fn(); });
+    });
+}
+
+// ── Particle Canvas ────────────────────────────────────────
+let particlesInited = false;
+function initParticles() {
+    if (particlesInited) return;
+    const canvas = document.getElementById('particleCanvas');
+    if (!canvas) return;
+    particlesInited = true;
+    const ctx = canvas.getContext('2d');
+    let w, h, dots = [];
+    function resize() { w = canvas.width = canvas.offsetWidth; h = canvas.height = canvas.offsetHeight; }
+    resize(); window.addEventListener('resize', resize);
+    for (let i = 0; i < 60; i++) dots.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 2 + 1, dx: (Math.random() - .5) * .4, dy: (Math.random() - .5) - .15, o: Math.random() * .5 + .2 });
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
+        dots.forEach(d => {
+            ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(94,245,196,${d.o})`; ctx.fill();
+            d.x += d.dx; d.y += d.dy;
+            if (d.x < 0) d.x = w; if (d.x > w) d.x = 0;
+            if (d.y < 0) d.y = h; if (d.y > h) d.y = 0;
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+}
+
+// ── Scroll Reveal ──────────────────────────────────────────
+let srObserver;
+function initScrollReveal() {
+    if (srObserver) return;
+    srObserver = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.sr').forEach(el => srObserver.observe(el));
+}
+
+// ── Stat Counters ──────────────────────────────────────────
+let statsRan = false;
+function runStatCounters() {
+    if (statsRan) return;
+    const nums = document.querySelectorAll('.stat-box .num[data-count]');
+    if (!nums.length) return;
+    const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            statsRan = true;
+            nums.forEach(el => {
+                const target = parseFloat(el.dataset.count);
+                let cur = 0; const inc = target / 60;
+                const tick = () => { cur += inc; if (cur >= target) { el.textContent = target; return; } el.textContent = Math.floor(cur); requestAnimationFrame(tick); };
+                tick();
+            });
+            obs.disconnect();
+        });
+    }, { threshold: 0.3 });
+    nums.forEach(el => obs.observe(el));
+}
+
+// ═══════════════════════════════════════════════════════════
+// FEATURE: History
+// ═══════════════════════════════════════════════════════════
+async function loadHistory() {
+    const loading = document.getElementById('historyLoading');
+    const revContainer = document.getElementById('historyReviewsContainer');
+    const intContainer = document.getElementById('historyInterviewsContainer');
+
+    loading.style.display = 'block';
+
+    try {
+        const resp = await fetchWithAuth(`${API}/api/v1/history/`);
+        if (!resp.ok) throw new Error('Failed to load history');
+
+        const data = await resp.json();
+
+        // Render Reviews
+        if (data.reviews.length === 0) {
+            revContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem;">No resume reviews yet.</div>';
+        } else {
+            revContainer.innerHTML = data.reviews.map(r => `
+                <div class="job-card-entry" style="animation: fadeUp .4s ease;">
+                    <h4>📄 General CV Review</h4>
+                    <div class="meta" style="margin-bottom: 4px;">Target JD: ${r.job_desc_used || 'None'}</div>
+                    <div class="company" style="color: var(--accent-1); margin-bottom: 6px;">Score: ${r.score !== null ? r.score + '/100' : 'N/A'}</div>
+                    <div class="meta" style="color: var(--text-primary); font-size: 0.85rem;">${r.feedback_summary || 'No summary generated.'}</div>
+                    <div class="meta" style="margin-top: 8px; font-size: 0.75rem;">${new Date(r.created_at).toLocaleString()}</div>
+                </div>
+            `).join('');
+        }
+
+        // Render Interviews
+        if (data.interviews.length === 0) {
+            intContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem;">No mock interviews yet.</div>';
+        } else {
+            intContainer.innerHTML = data.interviews.map(i => {
+                const verdictClass = i.verdict && typeof i.verdict === 'string' ? i.verdict.toLowerCase().replace(/\\s+/g, '-') : '';
+                const verdictTag = i.verdict ? `<span class="review-verdict review-verdict-${verdictClass}" style="display:inline-block; margin-bottom:8px;">${i.verdict}</span>` : '';
+                return `
+                <div class="job-card-entry" style="animation: fadeUp .5s ease;">
+                    <h4>🎙️ ${i.job_role || 'General'} Interview</h4>
+                    <div class="company" style="color: var(--accent-2); margin-bottom: 6px;">Score: ${i.score !== null ? i.score + '/100' : 'N/A'}</div>
+                    ${verdictTag}
+                    <div class="meta" style="margin-top: 8px; font-size: 0.75rem;">${new Date(i.created_at).toLocaleString()}</div>
+                </div>
+            `}).join('');
+        }
+
+    } catch (e) {
+        console.error(e);
+        revContainer.innerHTML = '<div style="color:var(--error);">Error loading data.</div>';
+        intContainer.innerHTML = '<div style="color:var(--error);">Error loading data.</div>';
+    } finally {
+        loading.style.display = 'none';
+    }
+}
+
+// ── Init ───────────────────────────────────────────────────
+function initApp() {
+    setupUploadZone();
+    bindNavigationHandlers();
+    bindAuthHandlers();
+    bindFeatureHandlers();
+    showPage('home');
+    initializeAuthGate();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}

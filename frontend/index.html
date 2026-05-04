@@ -1,264 +1,776 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI-powered career assistant — Review resumes, practice interviews, find matching jobs, and generate digital footprints.">
-    <title>AI Career Assistant</title>
+    <meta name="description"
+        content="AuraHire — AI-powered career platform for resume review, mock interviews, job matching, and digital footprint analysis.">
+    <title>AuraHire — AI Career Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ── Page Routing ──────────────────────────────── */
+        .page {
+            display: none
+        }
+
+        .page.active {
+            display: block
+        }
+
+        /* ── Home Page ─────────────────────────────────── */
+        .home-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 5vw;
+            background: rgba(5, 10, 18, .78);
+            backdrop-filter: blur(22px) saturate(1.4);
+            border-bottom: 1px solid rgba(94, 245, 196, .08);
+            transition: background .3s
+        }
+
+        .home-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #e4edf8
+        }
+
+        .home-header .logo svg {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0
+        }
+
+        .home-header .header-btns {
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .home-header .btn-sm {
+            padding: 9px 22px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: .88rem;
+            border: none;
+            cursor: pointer;
+            transition: .3s cubic-bezier(.4, 0, .2, 1);
+            font-family: 'Inter', sans-serif
+        }
+
+        .home-header .btn-sm.ghost {
+            background: transparent;
+            border: 1px solid rgba(94, 245, 196, .2);
+            color: #e4edf8
+        }
+
+        .home-header .btn-sm.ghost:hover {
+            border-color: rgba(94, 245, 196, .5);
+            background: rgba(94, 245, 196, .06)
+        }
+
+        .home-header .btn-sm.grad {
+            background: linear-gradient(135deg, #5ef5c4, #36c7d0, #e879a8);
+            color: #050a12;
+            box-shadow: 0 4px 20px rgba(94, 245, 196, .2)
+        }
+
+        .home-header .btn-sm.grad:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(94, 245, 196, .35)
+        }
+
+        /* Hero */
+        .home-hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 140px 5vw 80px;
+            overflow: hidden
+        }
+
+        .home-hero canvas {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none
+        }
+
+        .home-hero .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 780px
+        }
+
+        .home-hero h1 {
+            font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -.03em;
+            background: linear-gradient(135deg, #e4edf8 0%, #5ef5c4 35%, #36c7d0 55%, #e879a8 80%, #e4edf8 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shiftGrad 6s ease infinite;
+            margin-bottom: 20px
+        }
+
+        .home-hero .sub {
+            color: #8ba3c4;
+            font-size: clamp(1rem, 1.8vw, 1.2rem);
+            max-width: 600px;
+            margin: 0 auto 36px;
+            line-height: 1.65
+        }
+
+        .home-hero .hero-btns {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap
+        }
+
+        .hero-btn {
+            padding: 14px 34px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: .3s cubic-bezier(.4, 0, .2, 1);
+            font-family: 'Inter', sans-serif
+        }
+
+        .hero-btn.primary {
+            background: linear-gradient(135deg, #5ef5c4, #36c7d0, #e879a8);
+            color: #050a12;
+            box-shadow: 0 6px 28px rgba(94, 245, 196, .25)
+        }
+
+        .hero-btn.primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(94, 245, 196, .4)
+        }
+
+        .hero-btn.outline {
+            background: transparent;
+            border: 1px solid rgba(94, 245, 196, .25);
+            color: #e4edf8
+        }
+
+        .hero-btn.outline:hover {
+            border-color: #5ef5c4;
+            background: rgba(94, 245, 196, .06)
+        }
+
+        @keyframes shiftGrad {
+
+            0%,
+            100% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+        }
+
+        /* Features */
+        .home-features {
+            position: relative;
+            z-index: 2;
+            padding: 100px 5vw 60px;
+            max-width: 1100px;
+            margin: 0 auto
+        }
+
+        .home-features .section-label {
+            text-align: center;
+            margin-bottom: 56px
+        }
+
+        .home-features .section-label h2 {
+            font-size: clamp(1.8rem, 3vw, 2.6rem);
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #e4edf8
+        }
+
+        .home-features .section-label p {
+            color: #8ba3c4;
+            font-size: 1.05rem;
+            max-width: 540px;
+            margin: 0 auto
+        }
+
+        .feat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px
+        }
+
+        .feat-card {
+            background: rgba(10, 22, 44, .78);
+            border: 1px solid rgba(94, 245, 196, .1);
+            border-radius: 20px;
+            padding: 32px 28px;
+            backdrop-filter: blur(12px);
+            transition: .35s cubic-bezier(.4, 0, .2, 1);
+            position: relative;
+            overflow: hidden
+        }
+
+        .feat-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top left, rgba(94, 245, 196, .12), transparent 60%);
+            opacity: 0;
+            transition: opacity .35s
+        }
+
+        .feat-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(54, 199, 208, .3);
+            box-shadow: 0 20px 60px rgba(94, 245, 196, .12)
+        }
+
+        .feat-card:hover::before {
+            opacity: 1
+        }
+
+        .feat-card .icon {
+            font-size: 2.2rem;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 10px rgba(94, 245, 196, .4))
+        }
+
+        .feat-card h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e4edf8
+        }
+
+        .feat-card p {
+            color: #8ba3c4;
+            font-size: .92rem;
+            line-height: 1.6
+        }
+
+        .feat-cta {
+            text-align: center
+        }
+
+        /* Stats */
+        .home-stats {
+            padding: 60px 5vw 80px;
+            max-width: 900px;
+            margin: 0 auto
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            text-align: center
+        }
+
+        .stat-box {
+            padding: 32px 20px;
+            background: rgba(10, 22, 44, .7);
+            border: 1px solid rgba(94, 245, 196, .08);
+            border-radius: 20px;
+            backdrop-filter: blur(8px)
+        }
+
+        .stat-box .num {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #5ef5c4, #36c7d0, #e879a8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .stat-box .lbl {
+            color: #8ba3c4;
+            font-size: .88rem;
+            margin-top: 4px
+        }
+
+        /* Home footer */
+        .home-footer {
+            text-align: center;
+            padding: 32px 5vw;
+            color: #4a6484;
+            font-size: .85rem;
+            border-top: 1px solid rgba(94, 245, 196, .06)
+        }
+
+        /* Auth page */
+        .auth-page-wrap {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative
+        }
+
+        .auth-back {
+            position: absolute;
+            top: 28px;
+            left: 28px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #8ba3c4;
+            font-size: .92rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: .25s;
+            border: none;
+            background: none;
+            font-family: 'Inter', sans-serif
+        }
+
+        .auth-back:hover {
+            color: #e4edf8
+        }
+
+        .auth-back svg {
+            width: 18px;
+            height: 18px
+        }
+
+        /* Scroll reveal */
+        .sr {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity .65s ease, transform .65s ease
+        }
+
+        .sr.visible {
+            opacity: 1;
+            transform: translateY(0)
+        }
+
+        @media(max-width:640px) {
+            .home-header {
+                padding: 14px 4vw
+            }
+
+            .home-hero {
+                padding: 120px 4vw 60px
+            }
+
+            .home-hero .hero-btns {
+                flex-direction: column;
+                align-items: stretch
+            }
+
+            .home-features {
+                padding: 60px 4vw 40px
+            }
+
+            .feat-grid {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <!-- ── Animated Background ─────────────────────────────── -->
     <div class="bg-grid"></div>
     <div class="glow glow-1"></div>
     <div class="glow glow-2"></div>
     <div class="glow glow-3"></div>
 
-    <!-- ── Header ──────────────────────────────────────────── -->
-    <header class="header">
-        <div class="logo">
-            <svg class="logo-icon" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="url(#g1)" stroke-width="3"/><path d="M14 20l4 4 8-8" stroke="url(#g1)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g1" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs></svg>
-            <span>AI Career Assistant</span>
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- PAGE 1: HOME                                      -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="page active" id="page-home">
+        <header class="home-header">
+            <div class="logo">
+                <img src="logo.svg" alt="AuraHire" style="width: 36px; height: 36px;" />
+                AuraHire
+            </div>
+            <div class="header-btns">
+                <button class="btn-sm ghost" onclick="showPage('auth')" type="button">Login</button>
+                <button class="btn-sm grad" onclick="showPage('auth','register')" type="button">Get Started</button>
+            </div>
+        </header>
+
+        <section class="home-hero">
+            <canvas id="particleCanvas"></canvas>
+            <div class="hero-content sr">
+                <h1>Accelerate Your Career with AI</h1>
+                <p class="sub">Resume analysis, mock interviews, job matching, and career footprint tracking — all in
+                    one platform.</p>
+                <div class="hero-btns">
+                    <button class="hero-btn primary" onclick="showPage('auth','register')" type="button">Get Started
+                        Free</button>
+                    <button class="hero-btn outline"
+                        onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})"
+                        type="button">See How It Works</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-features" id="features">
+            <div class="section-label sr">
+                <h2>Everything You Need to Land Your Dream Job</h2>
+                <p>Four AI-powered tools working together to supercharge every step of your career journey.</p>
+            </div>
+            <div class="feat-grid">
+                <div class="feat-card sr">
+                    <div class="icon">📄</div>
+                    <h3>Resume Review</h3>
+                    <p>Upload your resume and get AI-powered scoring, feedback, and keyword analysis in seconds.</p>
+                </div>
+                <div class="feat-card sr">
+                    <div class="icon">🎙️</div>
+                    <h3>AI Interview</h3>
+                    <p>Practice with realistic AI-generated interview questions tailored to your target role.</p>
+                </div>
+                <div class="feat-card sr">
+                    <div class="icon">💼</div>
+                    <h3>Job Matcher</h3>
+                    <p>Paste a job description and instantly see how well your profile matches the requirements.</p>
+                </div>
+                <div class="feat-card sr">
+                    <div class="icon">👤</div>
+                    <h3>Footprint</h3>
+                    <p>Track your career activity, application history, and growth over time.</p>
+                </div>
+            </div>
+            <div class="feat-cta sr">
+                <button class="hero-btn primary" onclick="showPage('auth','register')" type="button">Start Now</button>
+            </div>
+        </section>
+
+        <section class="home-stats">
+            <div class="stats-row">
+                <div class="stat-box sr">
+                    <div class="num" data-count="50">0</div>
+                    <div class="lbl">K+ Resumes Analyzed</div>
+                </div>
+                <div class="stat-box sr">
+                    <div class="num" data-count="95">0</div>
+                    <div class="lbl">% Interview Success Rate</div>
+                </div>
+                <div class="stat-box sr">
+                    <div class="num" data-count="10">0</div>
+                    <div class="lbl">K+ Jobs Matched</div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="home-footer">
+            <div class="logo" style="justify-content:center;margin-bottom:10px;font-size:1rem">
+                <img src="logo.svg" alt="AuraHire" style="width: 28px; height: 28px;" />
+                AuraHire
+            </div>
+            © 2026 AuraHire. All rights reserved.
+        </footer>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- PAGE 2: AUTH                                       -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="page" id="page-auth">
+        <div class="auth-page-wrap">
+            <button class="auth-back" onclick="showPage('home')" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Back to Home
+            </button>
+            <div style="max-width:460px;width:100%">
+                <div style="text-align:center;margin-bottom:28px">
+                    <div class="logo" style="justify-content:center;margin-bottom:12px">
+                        <img src="logo.svg" alt="AuraHire" style="width: 44px; height: 44px;" />
+                    </div>
+                    <h2 style="font-size:1.6rem;font-weight:700;color:#e4edf8;margin-bottom:4px">Welcome to AuraHire
+                    </h2>
+                    <p style="color:#8ba3c4;font-size:.92rem">Sign in or create an account to continue</p>
+                </div>
+                <div class="card" style="margin-bottom:0">
+                    <div style="display:flex;gap:8px;margin-bottom:24px">
+                        <button class="mode-btn active" id="authTabLogin" type="button">Login</button>
+                        <button class="mode-btn" id="authTabRegister" type="button">Register</button>
+                    </div>
+                    <div id="authStatus" class="status-box" style="display:none;margin-top:0;margin-bottom:16px"></div>
+                    <div id="loginForm">
+                        <div class="form-group"><label for="loginEmail">Email</label><input class="input" type="email"
+                                id="loginEmail" placeholder="your@email.com" required></div>
+                        <div class="form-group"><label for="loginPassword">Password</label><input class="input"
+                                type="password" id="loginPassword" placeholder="Enter password" required></div>
+                        <button class="btn btn-primary" id="loginSubmitBtn" type="button"
+                            style="width:100%;justify-content:center">Login</button>
+                    </div>
+                    <div id="registerForm" style="display:none">
+                        <div class="form-group"><label for="registerEmail">Email</label><input class="input"
+                                type="email" id="registerEmail" placeholder="your@email.com" required></div>
+                        <div class="form-group"><label for="registerPassword">Password</label><input class="input"
+                                type="password" id="registerPassword" placeholder="Create password" required></div>
+                        <button class="btn btn-primary" id="registerSubmitBtn" type="button"
+                            style="width:100%;justify-content:center">Create Account</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <nav class="nav" id="mainNav">
-            <button class="nav-btn active" data-tab="review" id="nav-review">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                Resume Review
-            </button>
-            <button class="nav-btn" data-tab="interview" id="nav-interview">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                AI Interview
-            </button>
-            <button class="nav-btn" data-tab="jobs" id="nav-jobs">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                Job Matcher
-            </button>
-            <button class="nav-btn" data-tab="footprint" id="nav-footprint">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                Footprint
-            </button>
-        </nav>
-    </header>
+    </div>
 
-    <!-- ── Main Content ────────────────────────────────────── -->
-    <main class="main">
-
-        <!-- AUTH SECTION -->
-        <section class="auth-section" id="auth-section">
-            <div class="card auth-card">
-                <h2>Account Access</h2>
-                <p>Create an account or log in to use authenticated features.</p>
-
-                <div class="form-row">
-                    <div class="form-group flex-1">
-                        <label for="registerEmail">Register Email</label>
-                        <input type="email" id="registerEmail" class="input" placeholder="name@example.com">
-                    </div>
-                    <div class="form-group flex-1">
-                        <label for="registerPassword">Register Password</label>
-                        <input type="password" id="registerPassword" class="input" placeholder="At least 8 characters">
-                    </div>
-                </div>
-                <button class="btn btn-primary" id="registerBtn" onclick="submitRegister()">Register</button>
-
-                <div class="form-row" style="margin-top: 16px;">
-                    <div class="form-group flex-1">
-                        <label for="loginEmail">Login Email</label>
-                        <input type="email" id="loginEmail" class="input" placeholder="name@example.com">
-                    </div>
-                    <div class="form-group flex-1">
-                        <label for="loginPassword">Login Password</label>
-                        <input type="password" id="loginPassword" class="input" placeholder="Your password">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <button class="btn btn-primary" id="loginBtn" onclick="submitLogin()">Login</button>
-                    <button class="btn btn-primary" id="logoutBtn" onclick="submitLogout()">Logout</button>
-                </div>
-
-                <div id="authStatus" class="status-box" style="display:none; margin-top: 12px;"></div>
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- PAGE 3: DASHBOARD                                  -->
+    <!-- ══════════════════════════════════════════════════ -->
+    <div class="page" id="page-dashboard">
+        <header class="header">
+            <div class="logo">
+                <img src="logo.svg" class="logo-icon" alt="AuraHire" />
+                AuraHire
             </div>
-        </section>
+            <nav class="nav">
+                <button class="nav-btn active" data-tab="review" type="button"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                    </svg>Resume Review</button>
+                <button class="nav-btn" data-tab="interview" type="button"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" y1="19" x2="12" y2="23" />
+                        <line x1="8" y1="23" x2="16" y2="23" />
+                    </svg>AI Interview</button>
+                <button class="nav-btn" data-tab="jobs" type="button"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                    </svg>Job Matcher</button>
+                <button class="nav-btn" data-tab="footprint" type="button"><svg viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>Footprint</button>
+                <button class="nav-btn" data-tab="history" id="historyNavBtn" type="button"><svg viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path
+                            d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                        <circle cx="12" cy="12" r="8" />
+                    </svg>History</button>
+            </nav>
+            <button class="btn btn-ghost" id="logoutBtn" type="button" style="display:none"><svg width="18" height="18"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>Logout</button>
+        </header>
 
-        <section class="auth-gate-banner" id="authGateBanner" aria-live="polite">
-            <div class="status-box">
-                🔒 Please register or log in to access AI Resume Reviewer, AI Interview, Job Matcher, and Footprint.
-            </div>
-        </section>
-
-        <!-- RESUME REVIEW TAB -->
-        <section class="tab-content active" id="tab-review">
-            <div class="hero-card">
-                <h1>AI Resume Reviewer</h1>
-                <p>Upload your resume for an instant analysis with actionable feedback</p>
-            </div>
-            <div class="card upload-card">
-                <div class="upload-zone" id="uploadZone">
-                    <svg class="upload-icon" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="30" stroke="url(#ug)" stroke-width="2" stroke-dasharray="6 4"/><path d="M32 20v20M24 28l8-8 8 8" stroke="url(#ug)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="ug" x1="0" y1="0" x2="64" y2="64"><stop stop-color="#6C63FF"/><stop offset="1" stop-color="#00D4FF"/></linearGradient></defs></svg>
-                    <p>Drop your resume here or <span class="upload-link">browse files</span></p>
-                    <span class="upload-hint">PDF, DOCX, or TXT (max 5 MB)</span>
-                    <input type="file" id="resumeFile" accept=".pdf,.docx,.txt" hidden>
+        <main class="main">
+            <!-- Tab: Resume Review -->
+            <div class="tab-content" id="tab-review">
+                <div class="hero-card">
+                    <h1>📄 Resume Review</h1>
+                    <p>Upload your resume or paste its text to get AI-powered feedback, scoring, and improvement
+                        suggestions.</p>
                 </div>
-                <div class="or-divider"><span>or paste text</span></div>
-                <textarea id="resumeText" class="textarea" placeholder="Paste your resume text here..." rows="6"></textarea>
-                <textarea id="jobDesc" class="textarea textarea-sm" placeholder="(Optional) Paste the target job description for keyword analysis..." rows="3"></textarea>
-                <button class="btn btn-primary" id="reviewBtn" onclick="submitReview()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    Analyze Resume
-                </button>
-            </div>
-            <div class="results-area" id="reviewResults" style="display:none"></div>
-        </section>
-
-        <!-- AI INTERVIEW TAB -->
-        <section class="tab-content" id="tab-interview">
-            <div class="hero-card">
-                <h1>AI Interviewer</h1>
-                <p>Practice real-time voice interviews powered by Groq AI &amp; Deepgram</p>
+                <div class="card upload-card">
+                    <div class="upload-zone" id="uploadZone">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        <p>Drop your resume here or <span class="upload-link">browse files</span></p>
+                        <p class="upload-hint">Supports PDF, DOCX, TXT — Max 5 MB</p>
+                    </div>
+                    <input type="file" id="resumeFile" hidden>
+                </div>
+                <div class="or-divider">or paste your resume text</div>
+                <div class="card">
+                    <div class="form-group"><label for="resumeText">Resume Text</label><textarea class="textarea"
+                            id="resumeText" rows="6" placeholder="Paste your resume text here…"></textarea></div>
+                    <div class="form-group"><label for="jobDesc">Job Description (optional)</label><textarea
+                            class="textarea textarea-sm" id="jobDesc" rows="3"
+                            placeholder="Paste the target job description for tailored feedback…"></textarea></div>
+                    <button class="btn btn-primary" id="reviewBtn" type="button"><svg width="20" height="20"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>Analyze Resume</button>
+                </div>
+                <div class="results-area" id="reviewResults" style="display:none"></div>
             </div>
 
-            <!-- Setup Card (shown before interview starts) -->
-            <div class="card" id="interviewSetup">
-                <div class="form-group">
-                    <label for="interviewRole">Job Role</label>
-                    <input type="text" id="interviewRole" class="input" placeholder="e.g. Senior Python Developer" value="Software Engineer">
+            <!-- Tab: AI Interview -->
+            <div class="tab-content" id="tab-interview">
+                <div class="hero-card">
+                    <h1>🎙️ AI Interview</h1>
+                    <p>Practice interviews with an AI interviewer. Get real-time feedback and scoring.</p>
                 </div>
-                <div class="form-group">
-                    <label for="interviewDifficulty">Difficulty</label>
-                    <select id="interviewDifficulty" class="input">
-                        <option value="easy">Easy</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="hard">Hard</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" id="startInterviewBtn" onclick="startInterview()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
-                    Start Interview
-                </button>
-                <div id="interviewStatus" class="status-box" style="display:none"></div>
-            </div>
-
-            <!-- Interview Active Area (hidden until started) -->
-            <div id="interviewActive" style="display:none">
-                <!-- Progress Bar -->
-                <div class="card interview-progress-card">
-                    <div class="interview-progress-header">
-                        <span id="interviewProgressLabel">Question 1 / 6</span>
-                        <span class="interview-role-badge" id="interviewRoleBadge">Software Engineer · Medium</span>
+                <div class="card" id="interviewSetup">
+                    <div class="form-group"><label for="interviewRole">Job Role</label><input class="input" type="text"
+                            id="interviewRole" placeholder="e.g. Frontend Developer, Data Scientist…"></div>
+                    <div class="form-row">
+                        <div class="flex-1 form-group"><label for="interviewDifficulty">Difficulty</label><select
+                                class="input" id="interviewDifficulty">
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                            </select></div>
                     </div>
-                    <div class="interview-progress-bar">
-                        <div class="interview-progress-fill" id="interviewProgressFill" style="width:16.6%"></div>
-                    </div>
+                    <button class="btn btn-primary" id="startInterviewBtn" type="button"><svg width="20" height="20"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>Start Interview</button>
+                    <div id="interviewStatus" class="status-box" style="display:none"></div>
                 </div>
-
-                <!-- Conversation Transcript -->
-                <div class="card interview-conversation-card">
-                    <h3>💬 Interview Conversation</h3>
-                    <div class="interview-transcript" id="interviewTranscript"></div>
-                </div>
-
-                <!-- Answer Input Area -->
-                <div class="card interview-input-card" id="interviewInputCard">
-                    <div class="interview-input-mode-toggle">
-                        <button class="mode-btn active" id="modeVoiceBtn" onclick="setInterviewMode('voice')">🎙️ Voice</button>
-                        <button class="mode-btn" id="modeTextBtn" onclick="setInterviewMode('text')">⌨️ Text</button>
-                    </div>
-
-                    <!-- Voice mode -->
-                    <div class="interview-voice-area" id="voiceArea">
-                        <button class="record-btn" id="recordBtn" onclick="toggleRecording()">
-                            <div class="record-btn-inner" id="recordBtnInner">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                            </div>
-                            <div class="record-pulse" id="recordPulse"></div>
-                        </button>
-                        <p class="record-hint" id="recordHint">Click to start recording</p>
-                        <div class="waveform" id="waveform" style="display:none">
-                            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-                            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                <div id="interviewActive" style="display:none">
+                    <div class="card interview-progress-card">
+                        <div class="interview-progress-header"><span id="interviewProgressLabel">Question 1 /
+                                6</span><span class="interview-role-badge" id="interviewRoleBadge"></span></div>
+                        <div class="interview-progress-bar">
+                            <div class="interview-progress-fill" id="interviewProgressFill" style="width:0%"></div>
                         </div>
                     </div>
-
-                    <!-- Text mode -->
-                    <div class="interview-text-area" id="textArea" style="display:none">
-                        <textarea id="interviewAnswer" class="textarea" placeholder="Type your answer here..." rows="4"></textarea>
-                        <button class="btn btn-primary" id="submitTextBtn" onclick="submitTextAnswer()">
-                            Submit Answer
-                        </button>
+                    <div class="card interview-conversation-card">
+                        <h3>💬 Conversation</h3>
+                        <div class="interview-transcript" id="interviewTranscript"></div>
                     </div>
-                </div>
-
-                <!-- End Interview Button -->
-                <div style="text-align:center;margin-top:16px;">
-                    <button class="btn btn-secondary" id="endInterviewBtn" onclick="endInterview()">
-                        End Interview &amp; Get Feedback
-                    </button>
-                </div>
-            </div>
-
-            <!-- Final Feedback (shown after ending) -->
-            <div class="results-area" id="interviewResults" style="display:none"></div>
-        </section>
-
-        <!-- JOB MATCHER TAB -->
-        <section class="tab-content" id="tab-jobs">
-            <div class="hero-card">
-                <h1>Job Matcher</h1>
-                <p>Find the best-matching jobs for your resume</p>
-            </div>
-            <div class="card">
-                <textarea id="jobResumeText" class="textarea" placeholder="Paste your resume text here..." rows="6"></textarea>
-                <div class="form-row">
-                    <div class="form-group flex-1">
-                        <label for="jobHint">Job Title Hint (optional)</label>
-                        <input type="text" id="jobHint" class="input" placeholder="e.g. Data Scientist">
+                    <div class="card interview-input-card" id="interviewInputCard">
+                        <div class="interview-input-mode-toggle"><button class="mode-btn active" id="modeVoiceBtn"
+                                type="button">🎤 Voice</button><button class="mode-btn" id="modeTextBtn"
+                                type="button">⌨️ Text</button></div>
+                        <div class="interview-voice-area" id="voiceArea"><button class="record-btn" id="recordBtn"
+                                type="button">
+                                <div class="record-pulse" id="recordPulse"></div>
+                                <div class="record-btn-inner" id="recordBtnInner"><svg viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                        <line x1="12" y1="19" x2="12" y2="23" />
+                                        <line x1="8" y1="23" x2="16" y2="23" />
+                                    </svg></div>
+                            </button>
+                            <div class="waveform" id="waveform" style="display:none">
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                            </div><span class="record-hint" id="recordHint">Click to start recording</span>
+                        </div>
+                        <div class="interview-text-area" id="textArea" style="display:none"><textarea class="textarea"
+                                id="interviewAnswer" rows="4" placeholder="Type your answer here…"></textarea><button
+                                class="btn btn-primary" id="submitTextBtn" type="button">Send Answer</button></div>
                     </div>
-                    <div class="form-group flex-1">
-                        <label for="jobLocation">Location (optional)</label>
-                        <input type="text" id="jobLocation" class="input" placeholder="e.g. New York">
+                    <div style="text-align:center;margin-top:16px"><button class="btn-secondary" id="endInterviewBtn"
+                            type="button">End Interview</button></div>
+                </div>
+                <div class="results-area" id="interviewResults" style="display:none"></div>
+            </div>
+
+            <!-- Tab: Job Matcher -->
+            <div class="tab-content" id="tab-jobs">
+                <div class="hero-card">
+                    <h1>💼 Job Matcher</h1>
+                    <p>Paste your resume and get AI-matched job suggestions based on your skills.</p>
+                </div>
+                <div class="card">
+                    <div class="form-group"><label for="jobResumeText">Your Resume Text</label><textarea
+                            class="textarea" id="jobResumeText" rows="6"
+                            placeholder="Paste your full resume text here…"></textarea></div>
+                    <div class="form-row">
+                        <div class="flex-1 form-group"><label for="jobHint">Job Title Hint (optional)</label><input
+                                class="input" type="text" id="jobHint" placeholder="e.g. Software Engineer"></div>
+                        <div class="flex-1 form-group"><label for="jobLocation">Location (optional)</label><input
+                                class="input" type="text" id="jobLocation" placeholder="e.g. New York, Remote"></div>
                     </div>
+                    <button class="btn btn-primary" id="matchBtn" type="button"><svg width="20" height="20"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>Find Matching Jobs</button>
                 </div>
-                <button class="btn btn-primary" id="matchBtn" onclick="matchJobs()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                    Find Matching Jobs
-                </button>
+                <div class="results-area" id="jobResults" style="display:none"></div>
             </div>
-            <div class="results-area" id="jobResults" style="display:none"></div>
-        </section>
 
-        <!-- DIGITAL FOOTPRINT TAB -->
-        <section class="tab-content" id="tab-footprint">
-            <div class="hero-card">
-                <h1>Digital Footprint</h1>
-                <p>Generate a comprehensive summary from your GitHub & LinkedIn profiles</p>
-            </div>
-            <div class="card">
-                <div class="form-group">
-                    <label for="githubUser">GitHub Username</label>
-                    <input type="text" id="githubUser" class="input" placeholder="e.g. octocat">
+            <!-- Tab: Footprint -->
+            <div class="tab-content" id="tab-footprint">
+                <div class="hero-card">
+                    <h1>🌐 Digital Footprint</h1>
+                    <p>Analyze your online presence across GitHub and LinkedIn.</p>
                 </div>
-                <div class="form-group">
-                    <label for="linkedinUrl">LinkedIn Profile URL</label>
-                    <input type="text" id="linkedinUrl" class="input" placeholder="https://linkedin.com/in/username">
+                <div class="card">
+                    <div class="form-group"><label for="githubUser">GitHub Username</label><input class="input"
+                            type="text" id="githubUser" placeholder="e.g. octocat"></div>
+                    <div class="form-group"><label for="linkedinUrl">LinkedIn Profile URL</label><input class="input"
+                            type="url" id="linkedinUrl" placeholder="e.g. https://linkedin.com/in/your-profile"></div>
+                    <button class="btn btn-primary" id="footprintBtn" type="button"><svg width="20" height="20"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                        </svg>Generate Footprint</button>
                 </div>
-                <button class="btn btn-primary" id="footprintBtn" onclick="generateFootprint()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Generate Footprint
-                </button>
+                <div class="results-area" id="footprintResults" style="display:none"></div>
             </div>
-            <div class="results-area" id="footprintResults" style="display:none"></div>
-        </section>
 
-    </main>
+            <!-- Tab: History -->
+            <div class="tab-content" id="tab-history">
+                <div class="hero-card">
+                    <h1>🕒 Usage History</h1>
+                    <p>Review up to your last 3 Resume Reviews and AI Mock Interviews.</p>
+                </div>
+                <div id="historyLoading" class="status-box" style="display:none; margin-bottom:20px;">Loading history...
+                </div>
 
-    <footer class="footer">
-        <p>&copy; 2026 AI Career Assistant &mdash; Powered by spaCy, LiveKit, Groq & Deepgram</p>
-    </footer>
+                <h3 style="margin-bottom: 12px; color: var(--accent-1); font-weight: 600;">📄 Recent Resume Reviews</h3>
+                <div id="historyReviewsContainer" class="job-card-grid" style="margin-bottom: 40px;">
+                    <div style="color:var(--text-muted); font-size:0.9rem;">No resume reviews yet.</div>
+                </div>
 
-    <script src="app.js?v=20260315-1"></script>
+                <h3 style="margin-bottom: 12px; color: var(--accent-2); font-weight: 600;">🎙️ Recent AI Interviews</h3>
+                <div id="historyInterviewsContainer" class="job-card-grid">
+                    <div style="color:var(--text-muted); font-size:0.9rem;">No mock interviews yet.</div>
+                </div>
+            </div>
+        </main>
+        <footer class="footer">© 2026 AuraHire. All rights reserved.</footer>
+    </div>
+
+    <script src="app.js"></script>
 </body>
+
 </html>

@@ -21,6 +21,7 @@ langchain-community<0.4.0
 langchain-experimental<0.4.0
 chromadb
 python-multipart
+slowapi
 langchain-xai
 langchain-groq
 google-search-results

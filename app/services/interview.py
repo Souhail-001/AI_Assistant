@@ -115,8 +115,15 @@ def create_session(job_role: str, difficulty: str) -> tuple[InterviewSession, st
         SystemMessage(content=system_prompt),
         HumanMessage(content="Please start the interview. Ask your first question to the candidate."),
     ]
-    response = llm.invoke(messages)
-    first_question = response.content.strip()
+    try:
+        response = llm.invoke(messages)
+        first_question = response.content.strip()
+    except Exception as e:
+        err_str = str(e).lower()
+        if "rate" in err_str or "limit" in err_str or "quota" in err_str or "429" in err_str:
+            first_question = "⚠️ I apologize, but the AI service is currently at capacity or has reached its limits. We cannot start the interview right now. Please try again later."
+        else:
+            raise
 
     session.turns.append(InterviewTurn(question=first_question))
     _sessions[session_id] = session
@@ -153,24 +160,33 @@ FEEDBACK: <your feedback here>
 QUESTION: <next question here>"""
 
     context.append(HumanMessage(content=eval_prompt))
-    response = llm.invoke(context)
-    raw = response.content.strip()
+    try:
+        response = llm.invoke(context)
+        raw = response.content.strip()
 
-    # Parse feedback and question
-    feedback = ""
-    next_question = ""
+        # Parse feedback and question
+        feedback = ""
+        next_question = ""
 
-    if "FEEDBACK:" in raw and "QUESTION:" in raw:
-        parts = raw.split("QUESTION:")
-        feedback = parts[0].replace("FEEDBACK:", "").strip()
-        next_question = parts[1].strip() if len(parts) > 1 else ""
-    else:
-        # Fallback: treat entire response as feedback, generate question separately
-        feedback = raw
-        q_msgs = _build_conversation_context(session)
-        q_msgs.append(HumanMessage(content="Ask the next interview question. Just the question, nothing else."))
-        q_resp = llm.invoke(q_msgs)
-        next_question = q_resp.content.strip()
+        if "FEEDBACK:" in raw and "QUESTION:" in raw:
+            parts = raw.split("QUESTION:")
+            feedback = parts[0].replace("FEEDBACK:", "").strip()
+            next_question = parts[1].strip() if len(parts) > 1 else ""
+        else:
+            # Fallback: treat entire response as feedback, generate question separately
+            feedback = raw
+            q_msgs = _build_conversation_context(session)
+            q_msgs.append(HumanMessage(content="Ask the next interview question. Just the question, nothing else."))
+            q_resp = llm.invoke(q_msgs)
+            next_question = q_resp.content.strip()
+
+    except Exception as e:
+        err_str = str(e).lower()
+        if "rate" in err_str or "limit" in err_str or "quota" in err_str or "429" in err_str:
+            feedback = "⚠️ The AI service limit has been reached. We cannot evaluate this answer right now."
+            next_question = ""
+        else:
+            raise
 
     current_turn.feedback = feedback
 
@@ -229,8 +245,28 @@ RECOMMENDATION:
 <1 sentence hire/no-hire recommendation>"""
 
     context.append(HumanMessage(content=summary_prompt))
-    response = llm.invoke(context)
-    final = response.content.strip()
+    try:
+        response = llm.invoke(context)
+        final = response.content.strip()
+    except Exception as e:
+        err_str = str(e).lower()
+        if "rate" in err_str or "limit" in err_str or "quota" in err_str or "429" in err_str:
+            final = """OVERALL SCORE: 0/100
+VERDICT: INCOMPLETE
+
+STRENGTHS:
+- N/A
+
+AREAS FOR IMPROVEMENT:
+- N/A
+
+SUMMARY:
+The final evaluation could not be fully generated because the AI service API limit was reached during processing.
+
+RECOMMENDATION:
+Please try again later when the service capacity has reset."""
+        else:
+            raise
 
     session.final_feedback = final
 

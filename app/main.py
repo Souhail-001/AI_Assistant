@@ -11,9 +11,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from app.db.base import Base
 from app.db.session import engine
+from app.models.user import User
+from app.models.history import InterviewHistory, ReviewHistory
 
 from app.config import get_settings
-from app.routers import review, interview, jobs, footprint,auth
+from app.routers import review, interview, jobs, footprint, auth, history
 
 settings = get_settings()
 
@@ -69,7 +71,8 @@ app.include_router(review.router,       prefix="/api/v1/review",      tags=["Res
 app.include_router(interview.router,    prefix="/api/v1/interview",   tags=["AI Interviewer"])
 app.include_router(jobs.router,         prefix="/api/v1/jobs",        tags=["Job Matcher"])
 app.include_router(footprint.router,    prefix="/api/v1/footprint",   tags=["Digital Footprint"])
-app.include_router(auth.router,    prefix="/api/v1/auth",   tags=["authentication"])
+app.include_router(auth.router,         prefix="/api/v1/auth",        tags=["authentication"])
+app.include_router(history.router,      prefix="/api/v1/history",     tags=["History"])
 
 
 

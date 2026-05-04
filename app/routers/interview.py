@@ -4,6 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from app.db.session import get_db
+from app.models.user import User
+from app.services.history_service import save_interview_history
 from app.core.security import get_current_username
 from app.services import interview as svc
 
@@ -170,12 +175,33 @@ async def get_question_audio(session_id: str):
 
 
 @router.post("/{session_id}/end", response_model=EndResponse)
-async def end_interview(session_id: str):
+async def end_interview(
+    session_id: str,
+    db: Session = Depends(get_db),
+    email: str = Depends(get_current_username)
+):
     """End the interview and receive a comprehensive final evaluation."""
+    # Getting session strictly just to record the Job Role before ending invalidates it
+    job_role = "Unknown"
+    s = svc.get_session(session_id)
+    if s:
+        job_role = s.job_role
+
     try:
         result = svc.end_session(session_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+        
+    # Attempt to parse out Verdict from final feedback just for history storage
+    import re
+    verdict = "N/A"
+    v_match = re.search(r"VERDICT:\s*(.*)", result["final_feedback"])
+    if v_match:
+        verdict = v_match.group(1).strip()
+        
+    user = db.query(User).filter(or_(User.email == email, User.username == email)).first()
+    if user:
+        save_interview_history(db, user.id, job_role, result.get("score") or 0, verdict[:50])
 
     return EndResponse(
         final_feedback=result["final_feedback"],
