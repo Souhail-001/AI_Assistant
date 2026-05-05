@@ -61,9 +61,9 @@ def _chunk_overlap_ratio(a_tokens: Iterable[str], b_tokens: Iterable[str]) -> fl
     return sum(1 for token in a_list if token in b_set) / len(a_list)
 
 
-def _split_sentences(text: str) -> List[str]:
+def _split_sentences(text: str, min_len: int = 20) -> List[str]:
     sentences = [s.strip() for s in SENTENCE_RE.split(text) if s.strip()]
-    return [s for s in sentences if len(s) >= 40]
+    return [s for s in sentences if len(s) >= min_len]
 
 
 def _load_chunks_from_kb() -> List[Document]:
@@ -97,17 +97,20 @@ def _load_chunks_from_kb() -> List[Document]:
 def _build_dataset(chunks: List[Document], num_queries: int, seed: int) -> List[Tuple[str, str]]:
     """Return list of (query, source_text)."""
     random.seed(seed)
-    candidates = [c for c in chunks if _split_sentences(c.page_content)]
-    if not candidates:
+    pairs: List[Tuple[str, str]] = []
+    for chunk in chunks:
+        sentences = _split_sentences(chunk.page_content)
+        for sentence in sentences:
+            pairs.append((sentence, chunk.page_content))
+
+    if not pairs:
         raise ValueError("No valid chunks found for query generation.")
 
-    selected = random.sample(candidates, k=min(num_queries, len(candidates)))
-    dataset: List[Tuple[str, str]] = []
-    for chunk in selected:
-        sentences = _split_sentences(chunk.page_content)
-        sentence = random.choice(sentences)
-        dataset.append((sentence, chunk.page_content))
-    return dataset
+    if len(pairs) >= num_queries:
+        return random.sample(pairs, k=num_queries)
+
+    # Not enough unique sentences: sample with replacement to reach target size.
+    return [random.choice(pairs) for _ in range(num_queries)]
 
 
 def _get_retriever(vector_store, k: int, fetch_k: int):
