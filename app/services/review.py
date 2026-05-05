@@ -12,8 +12,8 @@ from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 
 # Define paths
-KNOWLEDGE_BASE_DIR = "app/data/knowledge_base"
-CHROMA_DB_DIR = "app/data/chroma_db"
+KNOWLEDGE_BASE_DIR = os.getenv("KNOWLEDGE_BASE_DIR", "app/data/knowledge_base")
+CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", "app/data/chroma_db")
 KB_MANIFEST_FILE = os.path.join(CHROMA_DB_DIR, ".kb_manifest.json")
 
 INCLUDE_KB_KEYWORDS = ("standard", "guideline", "ats", "rubric", "checklist", "template")

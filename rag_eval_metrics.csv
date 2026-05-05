@@ -1,0 +1,43 @@
+query_id,query,hit,rank,overlap,retrieval_ms,answer_coverage,generation_ms,answer
+1,"EXPERIENCE   Title,  Company  Name                   Start  Date  -  End  Date  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results   Title,  Company  Name                   Start  Date  -  End  Date  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results   Title,  Company  Name                   Start",1,1,1.000,152.75,,,
+2,"YOUR  NAME   Phone  |  Email  |  Location  (City,  State,  ZIP)  Online  Portfolio/Professional  Website  (Optional)   PROFESSIONAL  SUMMARY   2-3  sentences  or  2-3  bullet  points  that  include  your  years  of  professional  experience,  
+accomplishments,
+ 
+top
+ 
+skills
+ 
+and
+ 
+strengths
+ 
+as
+ 
+they
+ 
+relate
+ 
+to
+ 
+the
+ 
+position
+ 
+and
+ 
+what
+ 
+you’re
+ 
+looking
+ 
+for
+ 
+in
+ 
+your
+ 
+next
+ 
+role.",1,1,1.000,21.16,,,
+3,"+  reason,  outcome  or  quantified  results   Title,  Company  Name                   Start  Date  -  End  Date  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results  ●  (Action  verb)  +  what  you  did  (more  detail)  +  reason,  outcome  or  quantified  results   EDUCATION  Degree  Type,  Major  (if  applicable)         Month/Year  of  Completion  Institution  Name    SKILLS  Skill,  Skill,  Skill,  Skill,  Skill,  Skill,  Skill   AWARDS/RECOGNITIONS/VOLUNTEER  WORK  -  (OPTIONAL)   ●  Award,  recognition  or  volunteer  work           Date                          ●  Award,  recognition  or  volunteer  work           Date     ●  Award,  recognition  or  volunteer  work           Date",1,1,1.000,42.99,,,
