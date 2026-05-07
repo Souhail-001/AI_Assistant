@@ -6,7 +6,7 @@
 |---------|-------------|-------------|
 | **AI Resume Reviewer** | Upload/paste resume for instant RAG-powered analysis | Groq LLM, ChromaDB, LangChain |
 | **AI Interviewer** | Real-time voice/text interview practice | Groq LLM, Deepgram STT/TTS |
-| **Job Matcher** | Find matching jobs from your resume | Adzuna API, spaCy, sentence-transformers |
+| **Job Matcher** | Find matching jobs from your resume | spaCy, sentence-transformers |
 | **Digital Footprint** | Generate summary from GitHub & LinkedIn | SerpAPI, GitHub API |
 
 ## Environment Variables
